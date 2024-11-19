@@ -2,6 +2,7 @@ package rect
 
 import (
 	"crossmatcher/collection"
+	"strings"
 )
 
 type Candidate struct {
@@ -16,6 +17,19 @@ func MakeCandidateFirst(alphabet collection.Alphabet, horizontalSize int, vertic
 		for j := 0; j < verticalSize; j++ {
 			content[i][j] = 0
 		}
+	}
+	return Candidate{content, alphabet}
+}
+
+func MakeCandidate(rows []string) Candidate {
+	alphabet := collection.MakeAlphabet(strings.Join(rows, ""))
+	var content [][]int
+	for _, rowString := range rows {
+		var row []int
+		for _, char := range rowString {
+			row = append(row, alphabet.Number(char))
+		}
+		content = append(content, row)
 	}
 	return Candidate{content, alphabet}
 }

@@ -5,6 +5,15 @@ import (
 	"testing"
 )
 
+func TestCandidate_MakeCandidate(t *testing.T) {
+	candidate := MakeCandidate([]string{"a€", "ab", "2a"})
+	expected := "€ba"
+	actual, _ := candidate.GetCol(1)
+	if expected != actual {
+		t.Errorf("MakeCandidate is incorrect expected second column %s, actual %s", expected, actual)
+	}
+}
+
 func TestCandidate_IncrementCandidate(t *testing.T) {
 	alphabet := collection.MakeAlphabet("0€1")
 	candidate := MakeCandidateFirst(alphabet, 2, 3)
