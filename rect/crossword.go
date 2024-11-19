@@ -40,3 +40,20 @@ func (rules Crossword) CheckSolution(candidate Candidate) bool {
 	}
 	return true
 }
+
+func (rules Crossword) SolveBruteforce() (Candidate, int) {
+	horizontalDim := len(rules.Horizontal)
+	verticalDim := len(rules.Vertical)
+	candidate := MakeCandidateFirst(rules.Alphabet, horizontalDim, verticalDim)
+	candidateIsValid := true
+	solutionNum := 0
+	var solution Candidate
+	for candidateIsValid {
+		if rules.CheckSolution(candidate) {
+			solutionNum++
+			solution = candidate
+		}
+		candidate, candidateIsValid = candidate.IncrementCandidate()
+	}
+	return solution, solutionNum
+}
