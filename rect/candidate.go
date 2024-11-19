@@ -6,12 +6,14 @@ import (
 )
 
 type Candidate struct {
-	Content  [][]int
+	Content  Content
 	Alphabet collection.Alphabet
 }
 
+type Content [][]int
+
 func MakeCandidateFirst(alphabet collection.Alphabet, horizontalSize int, verticalSize int) Candidate {
-	content := make([][]int, horizontalSize)
+	content := make(Content, horizontalSize)
 	for i := 0; i < horizontalSize; i++ {
 		content[i] = make([]int, verticalSize)
 		for j := 0; j < verticalSize; j++ {
@@ -23,7 +25,7 @@ func MakeCandidateFirst(alphabet collection.Alphabet, horizontalSize int, vertic
 
 func MakeCandidate(rows []string) Candidate {
 	alphabet := collection.MakeAlphabet(strings.Join(rows, ""))
-	var content [][]int
+	var content Content
 	for _, rowString := range rows {
 		var row []int
 		for _, char := range rowString {
@@ -36,7 +38,7 @@ func MakeCandidate(rows []string) Candidate {
 
 func (candidate Candidate) IncrementCandidate() (Candidate, bool) {
 	success := false
-	increment := Candidate{candidate.Content, candidate.Alphabet}
+	increment := Candidate{candidate.Content.Copy(), candidate.Alphabet}
 	for i := 0; i < len(candidate.Content); i++ {
 		for j := 0; j < len(candidate.Content[i]); j++ {
 			if increment.Content[i][j] < increment.Alphabet.Len()-1 {
@@ -51,6 +53,18 @@ func (candidate Candidate) IncrementCandidate() (Candidate, bool) {
 		}
 	}
 	return increment, success
+}
+
+func (content Content) Copy() Content {
+	var newContent Content
+	for _, row := range content {
+		var newRow []int
+		for _, char := range row {
+			newRow = append(newRow, char)
+		}
+		newContent = append(newContent, newRow)
+	}
+	return newContent
 }
 
 func (candidate Candidate) GetRow(row int) (string, bool) {
