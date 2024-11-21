@@ -41,6 +41,28 @@ func MakeCandidateFromString(contentString string) Candidate {
 	return Candidate{content, alphabet}
 }
 
+func (candidate Candidate) IncrementCandidate() (Candidate, bool) {
+	success := false
+	increment := Candidate{candidate.Content.Copy(), candidate.Alphabet}
+	for i := 0; i < len(candidate.Content); i++ {
+		if increment.Content[i] < increment.Alphabet.Len()-1 {
+			increment.Content[i] += 1
+			success = true
+			break
+		}
+		increment.Content[i] = 0
+	}
+	return increment, success
+}
+
+func (content Content) Copy() Content {
+	var newContent Content
+	for _, char := range content {
+		newContent = append(newContent, char)
+	}
+	return newContent
+}
+
 func (candidate Candidate) GetRow() (string, bool) {
 	rowString := ""
 	for i := 0; i < len(candidate.Content); i++ {

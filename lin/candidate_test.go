@@ -58,3 +58,17 @@ func TestCandidate_MakeCandidateFromString(t *testing.T) {
 		t.Errorf("MakeCandidateFromString incorectly reports fail on row-retrieval.")
 	}
 }
+
+func TestCandidate_IncrementCandidate(t *testing.T) {
+	alphabet := collection.MakeAlphabet("0€1")
+	candidate := MakeCandidateFirst(alphabet, 6)
+	success := true
+	count := 0
+	for success {
+		candidate, success = candidate.IncrementCandidate()
+		count++
+	}
+	if count != 729 {
+		t.Errorf("Incorrect number of distinct candidates: expected 729, got %d", count)
+	}
+}
