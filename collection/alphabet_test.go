@@ -23,16 +23,24 @@ func TestAlphabet_Make(t *testing.T) {
 
 func TestAlphabet_Bijective(t *testing.T) {
 	alphabet := MakeAlphabet("abcA€")
-	if alphabet.Char(alphabet.Number('a')) != 'a' {
+	num, _ := alphabet.Number('a')
+	char, _ := alphabet.Char(num)
+	if char != 'a' {
 		t.Errorf("alphabet Char/Number are not inverse on 'a'")
 	}
-	if alphabet.Char(alphabet.Number('A')) != 'A' {
+	num, _ = alphabet.Number('A')
+	char, _ = alphabet.Char(num)
+	if char != 'A' {
 		t.Errorf("alphabet Char/Number are not inverse on 'A'")
 	}
-	if alphabet.Char(alphabet.Number('b')) != 'b' {
+	num, _ = alphabet.Number('b')
+	char, _ = alphabet.Char(num)
+	if char != 'b' {
 		t.Errorf("alphabet Char/Number are not inverse on 'b'")
 	}
-	if alphabet.Char(alphabet.Number('€')) != '€' {
+	num, _ = alphabet.Number('€')
+	char, _ = alphabet.Char(num)
+	if char != '€' {
 		t.Errorf("alphabet Char/Number are not inverse on '€'")
 	}
 }

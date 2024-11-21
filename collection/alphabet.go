@@ -32,10 +32,12 @@ func (alphabet Alphabet) Len() int {
 	return len(alphabet.number)
 }
 
-func (alphabet Alphabet) Char(num int) rune {
-	return alphabet.char[num]
+func (alphabet Alphabet) Char(num int) (rune, bool) {
+	char, ok := alphabet.char[num]
+	return char, ok
 }
 
-func (alphabet Alphabet) Number(char rune) int {
-	return alphabet.number[char]
+func (alphabet Alphabet) Number(char rune) (int, bool) {
+	num, ok := alphabet.number[char]
+	return num, ok
 }

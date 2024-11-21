@@ -29,7 +29,8 @@ func MakeCandidate(rows []string) Candidate {
 	for _, rowString := range rows {
 		var row []int
 		for _, char := range rowString {
-			row = append(row, alphabet.Number(char))
+			num, _ := alphabet.Number(char)
+			row = append(row, num)
 		}
 		content = append(content, row)
 	}
@@ -73,8 +74,11 @@ func (candidate Candidate) GetRow(row int) (string, bool) {
 	}
 	rowString := ""
 	for i := 0; i < len(candidate.Content[row]); i++ {
-		// TODO test for non-existing numbers
-		rowString += string(candidate.Alphabet.Char(candidate.Content[row][i]))
+		char, ok := candidate.Alphabet.Char(candidate.Content[row][i])
+		if !ok {
+			return "", false
+		}
+		rowString += string(char)
 	}
 	return rowString, true
 }
@@ -85,8 +89,11 @@ func (candidate Candidate) GetCol(col int) (string, bool) {
 		if len(candidate.Content[i]) <= col {
 			return "", false
 		}
-		// TODO test for non-existing numbers
-		colString += string(candidate.Alphabet.Char(candidate.Content[i][col]))
+		char, ok := candidate.Alphabet.Char(candidate.Content[i][col])
+		if !ok {
+			return "", false
+		}
+		colString += string(char)
 	}
 	return colString, true
 }
