@@ -41,10 +41,24 @@ func MakeCandidateFromString(contentString string) Candidate {
 	return Candidate{content, alphabet}
 }
 
-func (candidate Candidate) IncrementCandidate() (Candidate, bool) {
+func (c Candidate) Len() int {
+	return len(c.Content)
+}
+
+func (c Candidate) CountWildcards() int {
+	count := 0
+	for _, char := range c.Content {
+		if char == -1 {
+			count++
+		}
+	}
+	return count
+}
+
+func (c Candidate) IncrementCandidate() (Candidate, bool) {
 	success := false
-	increment := Candidate{candidate.Content.Copy(), candidate.Alphabet}
-	for i := 0; i < len(candidate.Content); i++ {
+	increment := Candidate{c.Content.Copy(), c.Alphabet}
+	for i := 0; i < len(c.Content); i++ {
 		if increment.Content[i] < increment.Alphabet.Len()-1 {
 			increment.Content[i] += 1
 			success = true
@@ -55,22 +69,48 @@ func (candidate Candidate) IncrementCandidate() (Candidate, bool) {
 	return increment, success
 }
 
-func (content Content) Copy() Content {
+func (c Content) Copy() Content {
 	var newContent Content
-	for _, char := range content {
+	for _, char := range c {
 		newContent = append(newContent, char)
 	}
 	return newContent
 }
 
-func (candidate Candidate) GetRow() (string, bool) {
+func (c Candidate) GetRow() (string, bool) {
 	rowString := ""
-	for i := 0; i < len(candidate.Content); i++ {
-		char, ok := candidate.Alphabet.Char(candidate.Content[i])
+	for i := 0; i < len(c.Content); i++ {
+		char, ok := c.Alphabet.Char(c.Content[i])
 		if !ok {
 			return "", false
 		}
 		rowString += string(char)
 	}
 	return rowString, true
+}
+
+func (c Candidate) MergeRow(cFill Candidate) (string, bool) {
+	if c.CountWildcards() != cFill.Len() {
+		return "", false
+	}
+	rowFill, ok := cFill.GetRow()
+	if !ok {
+		return "", false
+	}
+	runesFill := []rune(rowFill)
+	currentFill := 0
+	var runesMerge []rune
+	for _, num := range c.Content {
+		if num != -1 {
+			char, ok := c.Alphabet.Char(num)
+			if !ok {
+				return "", false
+			}
+			runesMerge = append(runesMerge, char)
+		} else {
+			runesMerge = append(runesMerge, runesFill[currentFill])
+			currentFill++
+		}
+	}
+	return string(runesMerge), true
 }
