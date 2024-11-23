@@ -13,7 +13,7 @@ type Candidate struct {
 type Content []int
 
 // MakeCandidateFirst makes starting candidate for Incrementation.
-// Fails on empty alphabet
+// Fails on empty alphabet.
 func MakeCandidateFirst(alphabet collection.Alphabet, size int) (Candidate, bool) {
 	if alphabet.Len() == 0 {
 		return Candidate{}, false
@@ -51,7 +51,8 @@ func MakeCandidate(contentString string, wildcards ...rune) Candidate {
 	return Candidate{content, alphabet}
 }
 
-// String returns the candidate. Wildcards are presented by the passed rune (default = '.')
+// String returns the candidate.
+// Wildcards are presented by the passed rune (default = '.').
 func (c Candidate) String(wildcard ...rune) string {
 	wildRune := '.'
 	if wildcard != nil {
@@ -104,7 +105,7 @@ func (c Candidate) IncrementCandidate() (Candidate, bool) {
 	return increment, success
 }
 
-// Copy creates an exact copy of the content
+// Copy creates an exact copy of the content.
 func (c Content) Copy() Content {
 	var newContent Content
 	for _, char := range c {
@@ -150,6 +151,7 @@ func (c Candidate) Merge(cFill Candidate) (Candidate, bool) {
 	return Candidate{contentMerge, alphabetMerge}, true
 }
 
+// GreatestCommonPattern finds the largest subset of equal non-wildcards.
 func (c Candidate) GreatestCommonPattern(cFill Candidate) (Candidate, bool) {
 	if c.Len() == 0 {
 		return cFill.Copy(), true
