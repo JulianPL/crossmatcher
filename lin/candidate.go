@@ -92,7 +92,7 @@ func (c Candidate) CountWildcards() int {
 // Fails on last candidate.
 func (c Candidate) IncrementCandidate() (Candidate, bool) {
 	success := false
-	increment := Candidate{c.Content.Copy(), c.Alphabet}
+	increment := c.Copy()
 	for i := 0; i < len(c.Content); i++ {
 		if increment.Content[i] < increment.Alphabet.Len()-1 {
 			increment.Content[i] += 1
@@ -104,12 +104,18 @@ func (c Candidate) IncrementCandidate() (Candidate, bool) {
 	return increment, success
 }
 
+// Copy creates an exact copy of the content
 func (c Content) Copy() Content {
 	var newContent Content
 	for _, char := range c {
 		newContent = append(newContent, char)
 	}
 	return newContent
+}
+
+// Copy creates an exact copy of the candidate
+func (c Candidate) Copy() Candidate {
+	return Candidate{c.Content.Copy(), c.Alphabet.Copy()}
 }
 
 // Merge fills the candidate cFill into the wildcards of candidate c.
@@ -146,9 +152,7 @@ func (c Candidate) Merge(cFill Candidate) (Candidate, bool) {
 
 func (c Candidate) GreatestCommonPattern(cFill Candidate) (Candidate, bool) {
 	if c.Len() == 0 {
-		alphabet := cFill.Alphabet.Copy()
-		content := cFill.Content.Copy()
-		return Candidate{content, alphabet}, true
+		return cFill.Copy(), true
 	}
 	if c.Len() != cFill.Len() {
 		return Candidate{}, false
