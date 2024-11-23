@@ -18,6 +18,26 @@ func MakeAlphabet(characters string, wildcards ...rune) Alphabet {
 	return alphabet
 }
 
+func (alphabet Alphabet) Copy() Alphabet {
+	newAlphabet := Alphabet{make(map[rune]int), make(map[int]rune)}
+	for key, value := range alphabet.number {
+		newAlphabet.number[key] = value
+	}
+	for key, value := range alphabet.char {
+		newAlphabet.char[key] = value
+	}
+	return newAlphabet
+}
+
+// Merge returns an alphabet with all characters from alphabet and from insert.
+func (alphabet Alphabet) Merge(insert Alphabet) Alphabet {
+	newAlphabet := alphabet.Copy()
+	for _, char := range insert.char {
+		newAlphabet.Insert(char)
+	}
+	return newAlphabet
+}
+
 func (alphabet Alphabet) Insert(char rune) {
 	if alphabet.Contains(char) {
 		return

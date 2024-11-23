@@ -40,7 +40,7 @@ func TestCrossword_SolveBruteforce(t *testing.T) {
 	if count != 1 {
 		t.Errorf("SolveBruteforce did not find the correct number of solutions. Expected %d, got %d", 1, count)
 	}
-	row, _ := solution.GetRowWithWildcard('.')
+	row := solution.String()
 	if row != "abbaba" {
 		t.Errorf("SolveBruteforce did not find the correct first row. Expected %s, got %s", "abbaba", row)
 	}
@@ -49,8 +49,17 @@ func TestCrossword_SolveBruteforce(t *testing.T) {
 	if count != 2 {
 		t.Errorf("SolveBruteforce did not find the correct number of solutions. Expected %d, got %d", 1, count)
 	}
-	row, _ = solution.GetRowWithWildcard('.')
+	row = solution.String()
 	if row != "ab..ba" {
-		t.Errorf("SolveBruteforce did not find the correct first row. Expected %s, got %s", "abbaba", row)
+		t.Errorf("SolveBruteforce did not find the correct first row. Expected %s, got %s", "ab..ba", row)
+	}
+	candidate = MakeCandidate("a.....", '.')
+	solution, count = crossword.SolveBruteforce(candidate)
+	if count != 3 {
+		t.Errorf("SolveBruteforce did not find the correct number of solutions. Expected %d, got %d", 3, count)
+	}
+	row = solution.String()
+	if row != "ab...." {
+		t.Errorf("SolveBruteforce did not find the correct first row. Expected %s, got %s", "ab....", row)
 	}
 }

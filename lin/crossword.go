@@ -15,16 +15,10 @@ func MakeCrossword(rule string, alphabet collection.Alphabet) Crossword {
 }
 
 func (crossword Crossword) CheckSolution(candidate Candidate) bool {
-	row, success := candidate.GetRow()
-	if !success {
+	if candidate.CountWildcards() > 0 {
 		return false
 	}
-	rowRule := "^(" + crossword.Rule + ")$"
-	matched, _ := regexp.MatchString(rowRule, row)
-	return matched
-}
-
-func (crossword Crossword) CheckSolutionString(row string) bool {
+	row := candidate.String()
 	rowRule := "^(" + crossword.Rule + ")$"
 	matched, _ := regexp.MatchString(rowRule, row)
 	return matched
@@ -32,17 +26,17 @@ func (crossword Crossword) CheckSolutionString(row string) bool {
 
 func (crossword Crossword) SolveBruteforce(constraint Candidate) (Candidate, int) {
 	numWildcards := constraint.CountWildcards()
-	candidate, _ := MakeCandidateFirst(crossword.Alphabet, numWildcards)
+	candidateFill, _ := MakeCandidateFirst(crossword.Alphabet, numWildcards)
 	candidateIsValid := true
 	solutionNum := 0
 	var solution Candidate
 	for candidateIsValid {
-		row, _ := constraint.MergeRow(candidate)
-		if crossword.CheckSolutionString(row) {
+		candidateMerge, _ := constraint.Merge(candidateFill)
+		if crossword.CheckSolution(candidateMerge) {
 			solutionNum++
-			solution, _ = solution.GreatestCommonPattern(MakeCandidate(row))
+			solution, _ = solution.GreatestCommonPattern(candidateMerge)
 		}
-		candidate, candidateIsValid = candidate.IncrementCandidate()
+		candidateFill, candidateIsValid = candidateFill.IncrementCandidate()
 	}
 	return solution, solutionNum
 }

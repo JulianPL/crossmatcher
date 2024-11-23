@@ -89,6 +89,7 @@ func (c Candidate) CountWildcards() int {
 
 // IncrementCandidate makes the lexicographically next candidate.
 // The order uses the reversed content and the given alphabet.
+// Fails on last candidate.
 func (c Candidate) IncrementCandidate() (Candidate, bool) {
 	success := false
 	increment := Candidate{c.Content.Copy(), c.Alphabet}
@@ -111,87 +112,48 @@ func (c Content) Copy() Content {
 	return newContent
 }
 
-func (c Candidate) GetRow() (string, bool) {
-	rowString := ""
-	for i := 0; i < len(c.Content); i++ {
-		char, ok := c.Alphabet.Char(c.Content[i])
-		if !ok {
-			return "", false
-		}
-		rowString += string(char)
-	}
-	return rowString, true
-}
-
-func (c Candidate) GetRowWithWildcard(wildcard rune) (string, bool) {
-	rowString := ""
-	for i := 0; i < len(c.Content); i++ {
-		if c.Content[i] == -1 {
-			rowString += string(wildcard)
-			continue
-		}
-		char, ok := c.Alphabet.Char(c.Content[i])
-		if !ok {
-			return "", false
-		}
-		rowString += string(char)
-	}
-	return rowString, true
-}
-
-func (c Candidate) GetNonWildcards() (string, bool) {
-	rowString := ""
-	for i := 0; i < len(c.Content); i++ {
-		if c.Content[i] == -1 {
-			continue
-		}
-		char, ok := c.Alphabet.Char(c.Content[i])
-		if !ok {
-			return "", false
-		}
-		rowString += string(char)
-	}
-	return rowString, true
-}
-
-func (c Candidate) MergeRow(cFill Candidate) (string, bool) {
+// Merge fills the candidate cFill into the wildcards of candidate c.
+// Fails if the length of cFill does not match the number of wildcards of c.
+func (c Candidate) Merge(cFill Candidate) (Candidate, bool) {
 	if c.CountWildcards() != cFill.Len() {
-		return "", false
+		return Candidate{}, false
 	}
-	rowFill, ok := cFill.GetRow()
-	if !ok {
-		return "", false
-	}
-	runesFill := []rune(rowFill)
+
+	alphabetMerge := c.Alphabet.Merge(cFill.Alphabet)
+	var contentMerge Content
 	currentFill := 0
-	var runesMerge []rune
+
 	for _, num := range c.Content {
+		var newNum int
 		if num != -1 {
 			char, _ := c.Alphabet.Char(num)
-			runesMerge = append(runesMerge, char)
+			newNum, _ = alphabetMerge.Number(char)
 		} else {
-			runesMerge = append(runesMerge, runesFill[currentFill])
+			if cFill.Content[currentFill] == -1 {
+				newNum = -1
+			} else {
+				char, _ := cFill.Alphabet.Char(cFill.Content[currentFill])
+				newNum, _ = alphabetMerge.Number(char)
+			}
 			currentFill++
 		}
+
+		contentMerge = append(contentMerge, newNum)
 	}
-	return string(runesMerge), true
+
+	return Candidate{contentMerge, alphabetMerge}, true
 }
 
 func (c Candidate) GreatestCommonPattern(cFill Candidate) (Candidate, bool) {
 	if c.Len() == 0 {
-		alphabet := cFill.Alphabet
+		alphabet := cFill.Alphabet.Copy()
 		content := cFill.Content.Copy()
 		return Candidate{content, alphabet}, true
 	}
 	if c.Len() != cFill.Len() {
 		return Candidate{}, false
 	}
-	alphabetString1, ok1 := c.GetNonWildcards()
-	alphabetString2, ok2 := cFill.GetNonWildcards()
-	if !ok1 || !ok2 {
-		return Candidate{}, false
-	}
-	alphabet := collection.MakeAlphabet(alphabetString1 + alphabetString2)
+	alphabet := c.Alphabet.Merge(cFill.Alphabet)
 	var content Content
 	for i := range c.Content {
 		num1 := c.Content[i]
@@ -200,11 +162,8 @@ func (c Candidate) GreatestCommonPattern(cFill Candidate) (Candidate, bool) {
 			content = append(content, -1)
 			continue
 		}
-		char1, ok1 := c.Alphabet.Char(num1)
-		char2, ok2 := cFill.Alphabet.Char(num2)
-		if !ok1 || !ok2 {
-			return Candidate{}, false
-		}
+		char1, _ := c.Alphabet.Char(num1)
+		char2, _ := cFill.Alphabet.Char(num2)
 		if char1 == char2 {
 			num, _ := alphabet.Number(char1)
 			content = append(content, num)

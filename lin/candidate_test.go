@@ -76,26 +76,65 @@ func TestCandidate_IncrementCandidate(t *testing.T) {
 	}
 }
 
-func TestCandidate_MergeRow(t *testing.T) {
+func TestCandidate_Merge(t *testing.T) {
 	candidate1 := MakeCandidate("aa..a", '.')
 	candidate2 := MakeCandidate("bb")
-	merge, ok := candidate1.MergeRow(candidate2)
+	merge, ok := candidate1.Merge(candidate2)
 	if !ok {
-		t.Errorf("MergeRow is incorrect, expected success")
+		t.Errorf("Merge is incorrect, expected success")
 	}
-	if merge != "aabba" {
-		t.Errorf("MergeRow is incorrect, expected \"aabba\", got %s", merge)
+	if merge.String('.') != "aabba" {
+		t.Errorf("Merge is incorrect, expected \"aabba\", got %s", merge.String('.'))
 	}
 	candidate1 = MakeCandidate("aa..a", '.')
 	candidate2 = MakeCandidate("b")
-	merge, ok = candidate1.MergeRow(candidate2)
+	merge, ok = candidate1.Merge(candidate2)
 	if ok {
-		t.Errorf("MergeRow is incorrect, merged rows with filler of wrong size")
+		t.Errorf("Merge is incorrect, merged rows with filler of wrong size")
 	}
 	candidate1 = MakeCandidate("aa..a", '.')
 	candidate2 = MakeCandidate("b.", '.')
-	merge, ok = candidate1.MergeRow(candidate2)
+	merge, ok = candidate1.Merge(candidate2)
+	if !ok {
+		t.Errorf("Merge is incorrect, expected success")
+	}
+	if merge.String('.') != "aab.a" {
+		t.Errorf("Merge is incorrect, expected \"aabba\", got %s", merge.String('.'))
+	}
+}
+
+func TestCrossword_GreatestCommonPattern(t *testing.T) {
+	candidate1 := MakeCandidate("aa..a", '.')
+	candidate2 := MakeCandidate("ab,aa", ',')
+	expected := "a...a"
+	candidateGCP, ok := candidate1.GreatestCommonPattern(candidate2)
+	actual := candidateGCP.String()
+	if !ok {
+		t.Errorf("GreatestCommonPattern is incorrect, expected success")
+	}
+	if actual != expected {
+		t.Errorf("GreatestCommonPattern is incorrect expected %s, actual %s", expected, actual)
+	}
+	candidate1 = MakeCandidate("aa..a", '.')
+	candidate2 = MakeCandidate("ab,aab", ',')
+	expected = ""
+	candidateGCP, ok = candidate1.GreatestCommonPattern(candidate2)
+	actual = candidateGCP.String()
 	if ok {
-		t.Errorf("MergeRow is incorrect, merged rows with wildcards")
+		t.Errorf("GreatestCommonPattern is incorrect, expected failure on candidates with different lengths")
+	}
+	if actual != expected {
+		t.Errorf("GreatestCommonPattern is incorrect expected %s, actual %s", expected, actual)
+	}
+	candidate1 = MakeCandidate("", '.')
+	candidate2 = MakeCandidate("ab,aab", ',')
+	expected = "ab.aab"
+	candidateGCP, ok = candidate1.GreatestCommonPattern(candidate2)
+	actual = candidateGCP.String()
+	if !ok {
+		t.Errorf("GreatestCommonPattern is incorrect, expected success on empty candidate")
+	}
+	if actual != expected {
+		t.Errorf("GreatestCommonPattern is incorrect expected %s, actual %s", expected, actual)
 	}
 }

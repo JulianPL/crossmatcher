@@ -44,3 +44,13 @@ func TestAlphabet_Bijective(t *testing.T) {
 		t.Errorf("alphabet Char/Number are not inverse on '€'")
 	}
 }
+
+func TestAlphabet_Merge(t *testing.T) {
+	alphabet1 := MakeAlphabet("abcd..", '.')
+	alphabet2 := MakeAlphabet("a.bcdee", '.')
+	expected := 5
+	actual := alphabet1.Merge(alphabet2).Len()
+	if actual != expected {
+		t.Errorf("Merge is incorrect. Expected length %d, got %d.", expected, actual)
+	}
+}
