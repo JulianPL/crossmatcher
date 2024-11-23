@@ -32,7 +32,7 @@ func (crossword Crossword) CheckSolutionString(row string) bool {
 
 func (crossword Crossword) SolveBruteforce(constraint Candidate) (Candidate, int) {
 	numWildcards := constraint.CountWildcards()
-	candidate := MakeCandidateFirst(crossword.Alphabet, numWildcards)
+	candidate, _ := MakeCandidateFirst(crossword.Alphabet, numWildcards)
 	candidateIsValid := true
 	solutionNum := 0
 	var solution Candidate
@@ -40,7 +40,7 @@ func (crossword Crossword) SolveBruteforce(constraint Candidate) (Candidate, int
 		row, _ := constraint.MergeRow(candidate)
 		if crossword.CheckSolutionString(row) {
 			solutionNum++
-			solution, _ = solution.GreatestCommonPattern(MakeCandidateFromString(row))
+			solution, _ = solution.GreatestCommonPattern(MakeCandidate(row))
 		}
 		candidate, candidateIsValid = candidate.IncrementCandidate()
 	}

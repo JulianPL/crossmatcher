@@ -1,14 +1,19 @@
 package collection
 
+import "slices"
+
 type Alphabet struct {
 	number map[rune]int
 	char   map[int]rune
 }
 
-func MakeAlphabet(characters string) Alphabet {
+// MakeAlphabet makes an alphabet that contains all non-wildcard characters from a given string.
+func MakeAlphabet(characters string, wildcards ...rune) Alphabet {
 	alphabet := Alphabet{make(map[rune]int), make(map[int]rune)}
 	for _, char := range characters {
-		alphabet.Insert(char)
+		if !slices.Contains(wildcards, char) {
+			alphabet.Insert(char)
+		}
 	}
 	return alphabet
 }

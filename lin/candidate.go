@@ -2,6 +2,7 @@ package lin
 
 import (
 	"crossmatcher/collection"
+	"slices"
 )
 
 type Candidate struct {
@@ -11,12 +12,16 @@ type Candidate struct {
 
 type Content []int
 
-func MakeCandidateFirst(alphabet collection.Alphabet, size int) Candidate {
+func MakeCandidateFirst(alphabet collection.Alphabet, size int) (Candidate, bool) {
+	if alphabet.Len() == 0 {
+		return Candidate{}, false
+	}
+
 	content := make(Content, size)
 	for i := 0; i < size; i++ {
 		content[i] = 0
 	}
-	return Candidate{content, alphabet}
+	return Candidate{content, alphabet}, true
 }
 
 func MakeCandidateEmpty(alphabet collection.Alphabet, size int) Candidate {
@@ -27,18 +32,50 @@ func MakeCandidateEmpty(alphabet collection.Alphabet, size int) Candidate {
 	return Candidate{content, alphabet}
 }
 
-func MakeCandidate(content Content, alphabet collection.Alphabet) Candidate {
-	return Candidate{content, alphabet}
+func MakeCandidateManual(content Content, alphabet collection.Alphabet) (Candidate, bool) {
+	for _, num := range content {
+		_, ok := alphabet.Char(num)
+		if (!ok) && (num != -1) {
+			return Candidate{}, false
+		}
+	}
+	return Candidate{content, alphabet}, true
 }
 
-func MakeCandidateFromString(contentString string) Candidate {
-	alphabet := collection.MakeAlphabet(contentString)
+// MakeCandidate makes a candidate representing a string. All wildcards are mapped to alphabet-number -1.
+func MakeCandidate(contentString string, wildcards ...rune) Candidate {
+	alphabet := collection.MakeAlphabet(contentString, wildcards...)
 	var content Content
 	for _, char := range contentString {
-		num, _ := alphabet.Number(char)
+		var num int
+		if slices.Contains(wildcards, char) {
+			num = -1
+		} else {
+			num, _ = alphabet.Number(char)
+		}
 		content = append(content, num)
 	}
 	return Candidate{content, alphabet}
+}
+
+// String returns the candidate. Wildcards are presented by the passed rune (default = '.')
+func (c Candidate) String(wildcard ...rune) string {
+	wildRune := '.'
+	if wildcard != nil {
+		wildRune = wildcard[0]
+	}
+
+	rowString := ""
+	for _, num := range c.Content {
+		if num == -1 {
+			rowString += string(wildRune)
+		} else {
+			char, _ := c.Alphabet.Char(num)
+			rowString += string(char)
+		}
+	}
+
+	return rowString
 }
 
 func (c Candidate) Len() int {
@@ -133,10 +170,7 @@ func (c Candidate) MergeRow(cFill Candidate) (string, bool) {
 	var runesMerge []rune
 	for _, num := range c.Content {
 		if num != -1 {
-			char, ok := c.Alphabet.Char(num)
-			if !ok {
-				return "", false
-			}
+			char, _ := c.Alphabet.Char(num)
 			runesMerge = append(runesMerge, char)
 		} else {
 			runesMerge = append(runesMerge, runesFill[currentFill])

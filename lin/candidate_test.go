@@ -7,71 +7,92 @@ import (
 
 func TestCandidate_MakeCandidateFirst(t *testing.T) {
 	alphabet := collection.MakeAlphabet("ab")
-	candidate := MakeCandidateFirst(alphabet, 2)
+	candidate, ok := MakeCandidateFirst(alphabet, 2)
 	expected := "aa"
-	actual, ok := candidate.GetRow()
+	actual := candidate.String()
+	if !ok {
+		t.Errorf("MakeCandidateFirst incorectly reports fail.")
+	}
 	if expected != actual {
 		t.Errorf("MakeCandidateFirst is incorrect expected %s, actual %s", expected, actual)
 	}
-	if !ok {
-		t.Errorf("MakeCandidateFirst incorectly reports fail on row-retrieval.")
+
+	alphabet = collection.MakeAlphabet("")
+	candidate, ok = MakeCandidateFirst(alphabet, 2)
+	expected = ""
+	actual = candidate.String()
+	if ok {
+		t.Errorf("MakeCandidateFirst incorectly accepts empty alphabet.")
+	}
+	if expected != actual {
+		t.Errorf("MakeCandidateFirst is incorrect expected %s, actual %s", expected, actual)
 	}
 }
 
 func TestCandidate_MakeCandidateEmpty(t *testing.T) {
 	alphabet := collection.MakeAlphabet("ab")
 	candidate := MakeCandidateEmpty(alphabet, 2)
-	expected := ""
-	actual, ok := candidate.GetRow()
+	expected := ".."
+	actual := candidate.String()
 	if expected != actual {
 		t.Errorf("MakeCandidateEmpty is incorrect expected %s, actual %s", expected, actual)
 	}
-	if ok {
-		t.Errorf("MakeCandidateEmpty is incorrect expected non-retrievable Row.")
-	}
 }
 
-func TestCandidate_MakeCandidate(t *testing.T) {
+func TestCandidate_MakeCandidateManual(t *testing.T) {
 	alphabet := collection.MakeAlphabet("ab")
 	numA, _ := alphabet.Number('a')
 	numB, _ := alphabet.Number('b')
 	content := []int{numA, numB, numA, numB, numB, numA}
-	candidate := MakeCandidate(content, alphabet)
+	candidate, ok := MakeCandidateManual(content, alphabet)
 	expected := "ababba"
-	actual, ok := candidate.GetRow()
+	actual := candidate.String()
 	if expected != actual {
-		t.Errorf("MakeCandidate is incorrect expected %s, actual %s", expected, actual)
+		t.Errorf("MakeCandidateManual is incorrect expected %s, actual %s", expected, actual)
 	}
 	if !ok {
-		t.Errorf("MakeCandidate incorectly reports fail on row-retrieval.")
+		t.Errorf("MakeCandidateManual incorectly reports fail.")
+	}
+	content = []int{numA, numB, numA, numB, numA, numB, numA, -1}
+	candidate, ok = MakeCandidateManual(content, alphabet)
+	expected = "abababa."
+	actual = candidate.String()
+	if expected != actual {
+		t.Errorf("MakeCandidateManual is incorrect expected %s, actual %s", expected, actual)
+	}
+	if !ok {
+		t.Errorf("MakeCandidateManual incorectly reports fail.")
+	}
+	content = []int{numA, numB, numA, numB, numA, numB, numA, 24}
+	candidate, ok = MakeCandidateManual(content, alphabet)
+	expected = ""
+	actual = candidate.String()
+	if expected != actual {
+		t.Errorf("MakeCandidateManual is incorrect expected %s, actual %s", expected, actual)
+	}
+	if ok {
+		t.Errorf("MakeCandidateManual incorectly reports success.")
 	}
 }
 
-func TestCandidate_MakeCandidateFromString(t *testing.T) {
-	candidate := MakeCandidateFromString("€ba")
-	expected := "€ba"
-	actual, ok := candidate.GetRow()
+func TestCandidate_MakeCandidate(t *testing.T) {
+	candidate := MakeCandidate("€ba.", '.')
+	expected := "€ba_"
+	actual := candidate.String('_')
 	if expected != actual {
-		t.Errorf("MakeCandidate is incorrect expected %s, actual %s", expected, actual)
-	}
-	if !ok {
-		t.Errorf("MakeCandidateFromString incorectly reports fail on row-retrieval.")
+		t.Errorf("MakeCandidateManual is incorrect expected %s, actual %s", expected, actual)
 	}
 }
 
 func TestCandidate_Len(t *testing.T) {
-	alphabet := collection.MakeAlphabet("a")
-	numA, _ := alphabet.Number('a')
-	candidate := MakeCandidate([]int{numA, -1, numA, -1, -1}, alphabet)
+	candidate := MakeCandidate("a.a..", '.')
 	if candidate.Len() != 5 {
 		t.Errorf("Len is incorrect expected %d, actual %d", 5, candidate.Len())
 	}
 }
 
 func TestCandidate_CountWildcards(t *testing.T) {
-	alphabet := collection.MakeAlphabet("a")
-	numA, _ := alphabet.Number('a')
-	candidate := MakeCandidate([]int{numA, -1, numA, -1, -1}, alphabet)
+	candidate := MakeCandidate("a.a..", '.')
 	if candidate.CountWildcards() != 3 {
 		t.Errorf("CountWildcards is incorrect expected %d, actual %d", 3, candidate.Len())
 	}
@@ -79,7 +100,7 @@ func TestCandidate_CountWildcards(t *testing.T) {
 
 func TestCandidate_IncrementCandidate(t *testing.T) {
 	alphabet := collection.MakeAlphabet("0€1")
-	candidate := MakeCandidateFirst(alphabet, 6)
+	candidate, _ := MakeCandidateFirst(alphabet, 6)
 	success := true
 	count := 0
 	for success {
@@ -92,11 +113,8 @@ func TestCandidate_IncrementCandidate(t *testing.T) {
 }
 
 func TestCandidate_MergeRow(t *testing.T) {
-	alphabet := collection.MakeAlphabet("ab")
-	numA, _ := alphabet.Number('a')
-	numB, _ := alphabet.Number('b')
-	candidate1 := MakeCandidate([]int{numA, numA, -1, -1, numA}, alphabet)
-	candidate2 := MakeCandidate([]int{numB, numB}, alphabet)
+	candidate1 := MakeCandidate("aa..a", '.')
+	candidate2 := MakeCandidate("bb")
 	merge, ok := candidate1.MergeRow(candidate2)
 	if !ok {
 		t.Errorf("MergeRow is incorrect, expected success")
@@ -104,22 +122,16 @@ func TestCandidate_MergeRow(t *testing.T) {
 	if merge != "aabba" {
 		t.Errorf("MergeRow is incorrect, expected \"aabba\", got %s", merge)
 	}
-	candidate1 = MakeCandidate([]int{numA, numA, -1, -1, numA}, alphabet)
-	candidate2 = MakeCandidate([]int{numB}, alphabet)
+	candidate1 = MakeCandidate("aa..a", '.')
+	candidate2 = MakeCandidate("b")
 	merge, ok = candidate1.MergeRow(candidate2)
 	if ok {
 		t.Errorf("MergeRow is incorrect, merged rows with filler of wrong size")
 	}
-	candidate1 = MakeCandidate([]int{numA, numA, -1, -1, numA}, alphabet)
-	candidate2 = MakeCandidate([]int{numB, -1}, alphabet)
+	candidate1 = MakeCandidate("aa..a", '.')
+	candidate2 = MakeCandidate("b.", '.')
 	merge, ok = candidate1.MergeRow(candidate2)
 	if ok {
 		t.Errorf("MergeRow is incorrect, merged rows with wildcards")
-	}
-	candidate1 = MakeCandidate([]int{numA, numA, -1, 10, numA}, alphabet)
-	candidate2 = MakeCandidate([]int{numB}, alphabet)
-	merge, ok = candidate1.MergeRow(candidate2)
-	if ok {
-		t.Errorf("MergeRow is incorrect, merged rows with undefined charactes")
 	}
 }
