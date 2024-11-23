@@ -39,42 +39,6 @@ func TestCandidate_MakeCandidateEmpty(t *testing.T) {
 	}
 }
 
-func TestCandidate_MakeCandidateManual(t *testing.T) {
-	alphabet := collection.MakeAlphabet("ab")
-	numA, _ := alphabet.Number('a')
-	numB, _ := alphabet.Number('b')
-	content := []int{numA, numB, numA, numB, numB, numA}
-	candidate, ok := MakeCandidateManual(content, alphabet)
-	expected := "ababba"
-	actual := candidate.String()
-	if expected != actual {
-		t.Errorf("MakeCandidateManual is incorrect expected %s, actual %s", expected, actual)
-	}
-	if !ok {
-		t.Errorf("MakeCandidateManual incorectly reports fail.")
-	}
-	content = []int{numA, numB, numA, numB, numA, numB, numA, -1}
-	candidate, ok = MakeCandidateManual(content, alphabet)
-	expected = "abababa."
-	actual = candidate.String()
-	if expected != actual {
-		t.Errorf("MakeCandidateManual is incorrect expected %s, actual %s", expected, actual)
-	}
-	if !ok {
-		t.Errorf("MakeCandidateManual incorectly reports fail.")
-	}
-	content = []int{numA, numB, numA, numB, numA, numB, numA, 24}
-	candidate, ok = MakeCandidateManual(content, alphabet)
-	expected = ""
-	actual = candidate.String()
-	if expected != actual {
-		t.Errorf("MakeCandidateManual is incorrect expected %s, actual %s", expected, actual)
-	}
-	if ok {
-		t.Errorf("MakeCandidateManual incorectly reports success.")
-	}
-}
-
 func TestCandidate_MakeCandidate(t *testing.T) {
 	candidate := MakeCandidate("€ba.", '.')
 	expected := "€ba_"

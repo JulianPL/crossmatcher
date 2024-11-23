@@ -12,6 +12,8 @@ type Candidate struct {
 
 type Content []int
 
+// MakeCandidateFirst makes starting candidate for Incrementation.
+// Fails on empty alphabet
 func MakeCandidateFirst(alphabet collection.Alphabet, size int) (Candidate, bool) {
 	if alphabet.Len() == 0 {
 		return Candidate{}, false
@@ -24,22 +26,13 @@ func MakeCandidateFirst(alphabet collection.Alphabet, size int) (Candidate, bool
 	return Candidate{content, alphabet}, true
 }
 
+// MakeCandidateEmpty makes a candidate consisting of only wildcards.
 func MakeCandidateEmpty(alphabet collection.Alphabet, size int) Candidate {
 	content := make(Content, size)
 	for i := 0; i < size; i++ {
 		content[i] = -1
 	}
 	return Candidate{content, alphabet}
-}
-
-func MakeCandidateManual(content Content, alphabet collection.Alphabet) (Candidate, bool) {
-	for _, num := range content {
-		_, ok := alphabet.Char(num)
-		if (!ok) && (num != -1) {
-			return Candidate{}, false
-		}
-	}
-	return Candidate{content, alphabet}, true
 }
 
 // MakeCandidate makes a candidate representing a string. All wildcards are mapped to alphabet-number -1.
@@ -78,10 +71,12 @@ func (c Candidate) String(wildcard ...rune) string {
 	return rowString
 }
 
+// Len returns the length of content of a candidate.
 func (c Candidate) Len() int {
 	return len(c.Content)
 }
 
+// CountWildcards returns the number of wildcards in the content of a candidate.
 func (c Candidate) CountWildcards() int {
 	count := 0
 	for _, char := range c.Content {
@@ -92,6 +87,8 @@ func (c Candidate) CountWildcards() int {
 	return count
 }
 
+// IncrementCandidate makes the lexicographically next candidate.
+// The order uses the reversed content and the given alphabet.
 func (c Candidate) IncrementCandidate() (Candidate, bool) {
 	success := false
 	increment := Candidate{c.Content.Copy(), c.Alphabet}
