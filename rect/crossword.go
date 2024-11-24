@@ -44,7 +44,7 @@ func (rules Crossword) CheckSolution(candidate Candidate) bool {
 func (rules Crossword) SolveBruteforce() (Candidate, int) {
 	horizontalDim := len(rules.Horizontal)
 	verticalDim := len(rules.Vertical)
-	candidate := MakeCandidateFirst(rules.Alphabet, horizontalDim, verticalDim)
+	candidate, _ := MakeCandidateFirst(rules.Alphabet, horizontalDim, verticalDim)
 	candidateIsValid := true
 	solutionNum := 0
 	var solution Candidate

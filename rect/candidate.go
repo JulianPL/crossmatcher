@@ -2,6 +2,7 @@ package rect
 
 import (
 	"crossmatcher/collection"
+	"crossmatcher/lin"
 	"strings"
 )
 
@@ -12,26 +13,29 @@ type Candidate struct {
 
 type Content [][]int
 
-func MakeCandidateFirst(alphabet collection.Alphabet, horizontalSize int, verticalSize int) Candidate {
-	content := make(Content, horizontalSize)
-	for i := 0; i < horizontalSize; i++ {
-		content[i] = make([]int, verticalSize)
-		for j := 0; j < verticalSize; j++ {
+// MakeCandidateFirst makes starting candidate for Incrementation.
+// Fails on empty alphabet.
+func MakeCandidateFirst(alphabet collection.Alphabet, verticalSize int, horizontalSize int) (Candidate, bool) {
+	if alphabet.Len() == 0 {
+		return Candidate{}, false
+	}
+
+	content := make(Content, verticalSize)
+	for i := range content {
+		content[i] = make(lin.Content, horizontalSize)
+		for j := range content[i] {
 			content[i][j] = 0
 		}
 	}
-	return Candidate{content, alphabet}
+	return Candidate{content, alphabet}, true
 }
 
-func MakeCandidate(rows []string) Candidate {
-	alphabet := collection.MakeAlphabet(strings.Join(rows, ""))
+// MakeCandidate makes a candidate representing a string. All wildcards are mapped to alphabet-number -1.
+func MakeCandidate(rows []string, wildcards ...rune) Candidate {
+	alphabet := collection.MakeAlphabet(strings.Join(rows, ""), wildcards...)
 	var content Content
 	for _, rowString := range rows {
-		var row []int
-		for _, char := range rowString {
-			num, _ := alphabet.Number(char)
-			row = append(row, num)
-		}
+		row, _ := lin.MakeContent(rowString, alphabet, wildcards...)
 		content = append(content, row)
 	}
 	return Candidate{content, alphabet}

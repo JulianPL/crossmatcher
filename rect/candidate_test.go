@@ -16,7 +16,7 @@ func TestCandidate_MakeCandidate(t *testing.T) {
 
 func TestCandidate_IncrementCandidate(t *testing.T) {
 	alphabet := collection.MakeAlphabet("0€1")
-	candidate := MakeCandidateFirst(alphabet, 2, 3)
+	candidate, _ := MakeCandidateFirst(alphabet, 2, 3)
 	success := true
 	count := 0
 	for success {
@@ -30,7 +30,7 @@ func TestCandidate_IncrementCandidate(t *testing.T) {
 
 func TestCandidate_GetRow(t *testing.T) {
 	alphabet := collection.MakeAlphabet("0€1")
-	candidate := MakeCandidateFirst(alphabet, 1, 3)
+	candidate, _ := MakeCandidateFirst(alphabet, 1, 3)
 	for i := 0; i < 5; i++ {
 		candidate, _ = candidate.IncrementCandidate()
 	}
@@ -50,7 +50,7 @@ func TestCandidate_GetRow(t *testing.T) {
 
 func TestCandidate_GetCol(t *testing.T) {
 	alphabet := collection.MakeAlphabet("0€1")
-	candidate := MakeCandidateFirst(alphabet, 3, 1)
+	candidate, _ := MakeCandidateFirst(alphabet, 3, 1)
 	for i := 0; i < 5; i++ {
 		candidate, _ = candidate.IncrementCandidate()
 	}
