@@ -48,6 +48,15 @@ func TestCandidate_MakeCandidate(t *testing.T) {
 	}
 }
 
+func TestCandidate_MakeContent(t *testing.T) {
+	alphabet := collection.MakeAlphabet("ab")
+	row := "abc"
+	_, ok := MakeContent(row, alphabet, '.')
+	if ok {
+		t.Errorf("MakeContent is incorrectly accepts alphabet without all relevant characters.")
+	}
+}
+
 func TestCandidate_Len(t *testing.T) {
 	candidate := MakeCandidate("a.a..", '.')
 	if candidate.Len() != 5 {

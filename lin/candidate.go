@@ -36,19 +36,30 @@ func MakeCandidateEmpty(alphabet collection.Alphabet, size int) Candidate {
 }
 
 // MakeCandidate makes a candidate representing a string. All wildcards are mapped to alphabet-number -1.
-func MakeCandidate(contentString string, wildcards ...rune) Candidate {
-	alphabet := collection.MakeAlphabet(contentString, wildcards...)
-	var content Content
-	for _, char := range contentString {
-		var num int
-		if slices.Contains(wildcards, char) {
-			num = -1
-		} else {
-			num, _ = alphabet.Number(char)
-		}
-		content = append(content, num)
-	}
+func MakeCandidate(row string, wildcards ...rune) Candidate {
+	alphabet := collection.MakeAlphabet(row, wildcards...)
+	content, _ := MakeContent(row, alphabet, wildcards...)
 	return Candidate{content, alphabet}
+}
+
+// MakeContent makes a content representing a string in a given alphabet.
+// All wildcards are mapped to alphabet-number -1.
+// Fails if a non-wildcard character is not in the alphabet
+func MakeContent(row string, alphabet collection.Alphabet, wildcards ...rune) (Content, bool) {
+	var content Content
+	for _, char := range row {
+		if slices.Contains(wildcards, char) {
+			num := -1
+			content = append(content, num)
+		} else {
+			num, ok := alphabet.Number(char)
+			if !ok {
+				return nil, false
+			}
+			content = append(content, num)
+		}
+	}
+	return content, true
 }
 
 // String returns the candidate.
