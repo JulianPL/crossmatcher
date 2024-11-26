@@ -22,7 +22,7 @@ func (rules Crossword) CheckSolution(candidate Candidate) bool {
 			return false
 		}
 		rowRule := "^(" + rules.Horizontal[rowNumber] + ")$"
-		matched, _ := regexp.MatchString(rowRule, row)
+		matched, _ := regexp.MatchString(rowRule, row.String())
 		if !matched {
 			return false
 		}
@@ -33,7 +33,7 @@ func (rules Crossword) CheckSolution(candidate Candidate) bool {
 			return false
 		}
 		colRule := "^(" + rules.Vertical[colNumber] + ")$"
-		matched, _ := regexp.MatchString(colRule, col)
+		matched, _ := regexp.MatchString(colRule, col.String())
 		if !matched {
 			return false
 		}

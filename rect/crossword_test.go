@@ -41,7 +41,7 @@ func TestCrossword_SolveBruteforce(t *testing.T) {
 		t.Errorf("SolveBruteforce did not find the correct number of solutions. Expected %d, got %d", 1, count)
 	}
 	row, _ := solution.GetRow(0)
-	if row != "ba" {
-		t.Errorf("SolveBruteforce did not find the correct first row. Expected %s, got %s", "ba", row)
+	if row.String() != "ba" {
+		t.Errorf("SolveBruteforce did not find the correct first row. Expected %s, got %s", "ba", row.String())
 	}
 }

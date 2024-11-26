@@ -9,8 +9,8 @@ func TestCandidate_MakeCandidate(t *testing.T) {
 	candidate := MakeCandidate([]string{"a€", "ab", "2a"})
 	expected := "€ba"
 	actual, _ := candidate.GetCol(1)
-	if expected != actual {
-		t.Errorf("MakeCandidate is incorrect expected second column %s, actual %s", expected, actual)
+	if expected != actual.String() {
+		t.Errorf("MakeCandidate is incorrect expected second column %s, actual %s", expected, actual.String())
 	}
 }
 
@@ -39,12 +39,12 @@ func TestCandidate_GetRow(t *testing.T) {
 	if !success {
 		t.Errorf("Incorrect row at index 0: no success reported")
 	}
-	if actual != expected {
-		t.Errorf("Incorrect row at index 0: expected %s, got %s", expected, actual)
+	if actual.String() != expected {
+		t.Errorf("Incorrect row at index 0: expected %s, got %s", expected, actual.String())
 	}
 	actual, success = candidate.GetRow(1)
 	if success {
-		t.Errorf("Incorrect row at index 1: incorrect success reported %s", actual)
+		t.Errorf("Incorrect row at index 1: incorrect success reported %s", actual.String())
 	}
 }
 
@@ -59,8 +59,8 @@ func TestCandidate_GetCol(t *testing.T) {
 	if !success {
 		t.Errorf("Incorrect col at index 0: no success reported")
 	}
-	if actual != expected {
-		t.Errorf("Incorrect col at index 0: expected %s, got %s", expected, actual)
+	if actual.String() != expected {
+		t.Errorf("Incorrect col at index 0: expected %s, got %s", expected, actual.String())
 	}
 	_, success = candidate.GetCol(1)
 	if success {

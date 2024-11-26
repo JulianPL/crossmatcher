@@ -11,7 +11,7 @@ type Candidate struct {
 	Alphabet collection.Alphabet
 }
 
-type Content [][]int
+type Content []lin.Content
 
 // MakeCandidateFirst makes starting candidate for Incrementation.
 // Fails on empty alphabet.
@@ -41,25 +41,27 @@ func MakeCandidate(rows []string, wildcards ...rune) Candidate {
 	return Candidate{content, alphabet}
 }
 
-func (candidate Candidate) IncrementCandidate() (Candidate, bool) {
+// IncrementCandidate makes the lexicographically next candidate.
+// The order uses the reversed content and the given alphabet.
+// Fails on last candidate.
+func (c Candidate) IncrementCandidate() (Candidate, bool) {
 	success := false
-	increment := Candidate{candidate.Content.Copy(), candidate.Alphabet}
-	for i := 0; i < len(candidate.Content); i++ {
-		for j := 0; j < len(candidate.Content[i]); j++ {
-			if increment.Content[i][j] < increment.Alphabet.Len()-1 {
-				increment.Content[i][j] += 1
-				success = true
-				break
-			}
-			increment.Content[i][j] = 0
-		}
-		if success {
+	increment := c.Copy()
+	for i := range increment.Content {
+		row, _ := increment.GetRow(i)
+		var ok bool
+		row, ok = row.IncrementCandidate()
+		increment.Content[i] = row.Content
+
+		if ok {
+			success = true
 			break
 		}
 	}
 	return increment, success
 }
 
+// Copy creates an exact copy of the content.
 func (content Content) Copy() Content {
 	var newContent Content
 	for _, row := range content {
@@ -72,32 +74,29 @@ func (content Content) Copy() Content {
 	return newContent
 }
 
-func (candidate Candidate) GetRow(row int) (string, bool) {
-	if len(candidate.Content) <= row {
-		return "", false
-	}
-	rowString := ""
-	for i := 0; i < len(candidate.Content[row]); i++ {
-		char, ok := candidate.Alphabet.Char(candidate.Content[row][i])
-		if !ok {
-			return "", false
-		}
-		rowString += string(char)
-	}
-	return rowString, true
+// Copy creates an exact copy of the candidate
+func (c Candidate) Copy() Candidate {
+	return Candidate{c.Content.Copy(), c.Alphabet.Copy()}
 }
 
-func (candidate Candidate) GetCol(col int) (string, bool) {
-	colString := ""
-	for i := 0; i < len(candidate.Content); i++ {
-		if len(candidate.Content[i]) <= col {
-			return "", false
-		}
-		char, ok := candidate.Alphabet.Char(candidate.Content[i][col])
-		if !ok {
-			return "", false
-		}
-		colString += string(char)
+// GetRow restrict a candidate to the given row (which leaves a linear candidate)
+func (c Candidate) GetRow(rowNumber int) (lin.Candidate, bool) {
+	if len(c.Content) <= rowNumber {
+		return lin.MakeCandidate(""), false
 	}
-	return colString, true
+	row, _ := lin.MakeCandidateManual(c.Content[rowNumber], c.Alphabet)
+	return row, true
+}
+
+// GetCol restrict a candidate to the given col (which leaves a linear candidate)
+func (c Candidate) GetCol(colNumber int) (lin.Candidate, bool) {
+	var content lin.Content
+	for _, row := range c.Content {
+		if len(row) <= colNumber {
+			return lin.MakeCandidate(""), false
+		}
+		content = append(content, row[colNumber])
+	}
+	col, _ := lin.MakeCandidateManual(content, c.Alphabet)
+	return col, true
 }
