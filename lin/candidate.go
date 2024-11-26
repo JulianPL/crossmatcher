@@ -42,6 +42,18 @@ func MakeCandidate(row string, wildcards ...rune) Candidate {
 	return Candidate{content, alphabet}
 }
 
+// MakeCandidateManual makes a candidate with given content and alphabet.
+// Fails if non-wildcard numbers which are not in the alphabet occur.
+func MakeCandidateManual(content Content, alphabet collection.Alphabet) (Candidate, bool) {
+	for _, num := range content {
+		_, ok := alphabet.Char(num)
+		if (!ok) && (num != -1) {
+			return Candidate{}, false
+		}
+	}
+	return Candidate{content.Copy(), alphabet.Copy()}, true
+}
+
 // MakeContent makes a content representing a string in a given alphabet.
 // All wildcards are mapped to alphabet-number -1.
 // Fails if a non-wildcard character is not in the alphabet

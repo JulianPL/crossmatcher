@@ -39,6 +39,25 @@ func TestCandidate_MakeCandidateEmpty(t *testing.T) {
 	}
 }
 
+func TestCandidate_MakeCandidateManual(t *testing.T) {
+	alphabet := collection.MakeAlphabet("ab")
+	numA, _ := alphabet.Number('a')
+	numB, _ := alphabet.Number('b')
+	content := Content{numA, numB, -1}
+	actual, ok := MakeCandidateManual(content, alphabet)
+	if !ok {
+		t.Errorf("MakeCandidateManual incorectly reports fail.")
+	}
+	if actual.String() != "ab." {
+		t.Errorf("MakeCandidateManual is incorrect expected %s, actual %s", "ab.", actual.String())
+	}
+	content = Content{numA, numB, 24}
+	_, ok = MakeCandidateManual(content, alphabet)
+	if ok {
+		t.Errorf("MakeCandidateManual is incorrect accepts content not defined by alphabet.")
+	}
+}
+
 func TestCandidate_MakeCandidate(t *testing.T) {
 	candidate := MakeCandidate("€ba.", '.')
 	expected := "€ba_"
