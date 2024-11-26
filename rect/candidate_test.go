@@ -2,8 +2,33 @@ package rect
 
 import (
 	"crossmatcher/collection"
+	"strconv"
 	"testing"
 )
+
+func TestCandidate_MakeCandidateFirst(t *testing.T) {
+	alphabet := collection.MakeAlphabet("ab")
+	candidate, ok := MakeCandidateFirst(alphabet, 2, 3)
+	expected := "aaa\naaa"
+	actual := candidate.String()
+	if !ok {
+		t.Errorf("MakeCandidateFirst incorectly reports fail.")
+	}
+	if expected != actual {
+		t.Errorf("MakeCandidateFirst is incorrect expected %s, actual %s", strconv.Quote(expected), strconv.Quote(actual))
+	}
+
+	alphabet = collection.MakeAlphabet("")
+	candidate, ok = MakeCandidateFirst(alphabet, 2, 3)
+	expected = ""
+	actual = candidate.String()
+	if ok {
+		t.Errorf("MakeCandidateFirst incorectly accepts empty alphabet.")
+	}
+	if expected != actual {
+		t.Errorf("MakeCandidateFirst is incorrect expected %s, actual %s", strconv.Quote(expected), strconv.Quote(actual))
+	}
+}
 
 func TestCandidate_MakeCandidate(t *testing.T) {
 	candidate := MakeCandidate([]string{"a€", "ab", "2a"})

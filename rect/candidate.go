@@ -41,6 +41,17 @@ func MakeCandidate(rows []string, wildcards ...rune) Candidate {
 	return Candidate{content, alphabet}
 }
 
+// String returns the candidate.
+// Wildcards are presented by the passed rune (default = '.').
+func (c Candidate) String(wildcard ...rune) string {
+	ret := ""
+	for _, rowContent := range c.Content {
+		row, _ := lin.MakeCandidateManual(rowContent, c.Alphabet)
+		ret += row.String(wildcard...) + "\n"
+	}
+	return strings.Trim(ret, "\n")
+}
+
 // IncrementCandidate makes the lexicographically next candidate.
 // The order uses the reversed content and the given alphabet.
 // Fails on last candidate.
