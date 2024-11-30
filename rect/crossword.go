@@ -2,7 +2,7 @@ package rect
 
 import (
 	"crossmatcher/collection"
-	"regexp"
+	"crossmatcher/lin"
 )
 
 type Crossword struct {
@@ -11,45 +11,61 @@ type Crossword struct {
 	Alphabet   collection.Alphabet
 }
 
+// MakeCrossword makes a crossword from two given sets of strings and an underlying alphabet.
 func MakeCrossword(alphabet collection.Alphabet, horizontal []string, vertical []string) Crossword {
 	return Crossword{horizontal, vertical, alphabet}
 }
 
-func (rules Crossword) CheckSolution(candidate Candidate) bool {
-	for rowNumber := 0; rowNumber < len(candidate.Content); rowNumber++ {
-		row, success := candidate.GetRow(rowNumber)
-		if !success {
-			return false
-		}
-		rowRule := "^(" + rules.Horizontal[rowNumber] + ")$"
-		matched, _ := regexp.MatchString(rowRule, row.String())
-		if !matched {
+func (crossword Crossword) GetRow(rowNumber int) (lin.Crossword, bool) {
+	if len(crossword.Horizontal) <= rowNumber {
+		return lin.MakeCrossword("", collection.MakeAlphabet("")), false
+	}
+	row := lin.MakeCrossword(crossword.Horizontal[rowNumber], crossword.Alphabet)
+	return row, true
+}
+
+func (crossword Crossword) GetCol(colNumber int) (lin.Crossword, bool) {
+	if len(crossword.Vertical) <= colNumber {
+		return lin.MakeCrossword("", collection.MakeAlphabet("")), false
+	}
+	col := lin.MakeCrossword(crossword.Vertical[colNumber], crossword.Alphabet)
+	return col, true
+}
+
+// CheckSolution checks, whether a candidate without wildcards satisfies a crossword.
+func (crossword Crossword) CheckSolution(candidate Candidate) bool {
+	if candidate.CountWildcards() > 0 {
+		return false
+	}
+
+	for rowNumber := range candidate.Content {
+		rowContent, _ := candidate.GetRow(rowNumber)
+		rowCrossword, _ := crossword.GetRow(rowNumber)
+		if !rowCrossword.CheckSolution(rowContent) {
 			return false
 		}
 	}
-	for colNumber := 0; colNumber < len(candidate.Content[0]); colNumber++ {
-		col, success := candidate.GetCol(colNumber)
-		if !success {
-			return false
-		}
-		colRule := "^(" + rules.Vertical[colNumber] + ")$"
-		matched, _ := regexp.MatchString(colRule, col.String())
-		if !matched {
+
+	for colNumber := range candidate.Content[0] {
+		colContent, _ := candidate.GetCol(colNumber)
+		colCrossword, _ := crossword.GetCol(colNumber)
+		if !colCrossword.CheckSolution(colContent) {
 			return false
 		}
 	}
 	return true
 }
 
-func (rules Crossword) SolveBruteforce() (Candidate, int) {
-	horizontalDim := len(rules.Horizontal)
-	verticalDim := len(rules.Vertical)
-	candidate, _ := MakeCandidateFirst(rules.Alphabet, horizontalDim, verticalDim)
+// SolveBruteforce checks all candidates.
+func (crossword Crossword) SolveBruteforce() (Candidate, int) {
+	horizontalDim := len(crossword.Horizontal)
+	verticalDim := len(crossword.Vertical)
+	candidate, _ := MakeCandidateFirst(crossword.Alphabet, horizontalDim, verticalDim)
 	candidateIsValid := true
 	solutionNum := 0
 	var solution Candidate
 	for candidateIsValid {
-		if rules.CheckSolution(candidate) {
+		if crossword.CheckSolution(candidate) {
 			solutionNum++
 			solution = candidate
 		}

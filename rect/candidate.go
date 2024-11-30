@@ -52,6 +52,16 @@ func (c Candidate) String(wildcard ...rune) string {
 	return strings.Trim(ret, "\n")
 }
 
+// CountWildcards returns the number of wildcards in the content of a candidate.
+func (c Candidate) CountWildcards() int {
+	count := 0
+	for _, rowContent := range c.Content {
+		row, _ := lin.MakeCandidateManual(rowContent, c.Alphabet)
+		count += row.CountWildcards()
+	}
+	return count
+}
+
 // IncrementCandidate makes the lexicographically next candidate.
 // The order uses the reversed content and the given alphabet.
 // Fails on last candidate.

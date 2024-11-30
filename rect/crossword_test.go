@@ -28,7 +28,12 @@ func TestCrossword_CheckSolution(t *testing.T) {
 	if solved {
 		t.Errorf("Non-solution was mistakenly verified.")
 	}
-	//TODO Test non-successful row/column retrieval
+	rows = []string{"ba", "a."}
+	candidate = MakeCandidate(rows, '.')
+	solved = crossword.CheckSolution(candidate)
+	if solved {
+		t.Errorf("Solution with wildcards was mistakenly verified.")
+	}
 }
 
 func TestCrossword_SolveBruteforce(t *testing.T) {
