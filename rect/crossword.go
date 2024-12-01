@@ -56,20 +56,20 @@ func (crossword Crossword) CheckSolution(candidate Candidate) bool {
 	return true
 }
 
-// SolveBruteforce checks all candidates.
-func (crossword Crossword) SolveBruteforce() (Candidate, int) {
-	horizontalDim := len(crossword.Horizontal)
-	verticalDim := len(crossword.Vertical)
-	candidate, _ := MakeCandidateFirst(crossword.Alphabet, horizontalDim, verticalDim)
+// SolveBruteforce checks all candidates that fill the wildcards given by the constraint.
+func (crossword Crossword) SolveBruteforce(constraint Candidate) (Candidate, int) {
+	candidateFill, _ := lin.MakeCandidateFirst(crossword.Alphabet, constraint.CountWildcards())
+
 	candidateIsValid := true
 	solutionNum := 0
 	var solution Candidate
 	for candidateIsValid {
-		if crossword.CheckSolution(candidate) {
+		candidateMerge, _ := constraint.Merge(candidateFill)
+		if crossword.CheckSolution(candidateMerge) {
 			solutionNum++
-			solution = candidate
+			solution = candidateMerge
 		}
-		candidate, candidateIsValid = candidate.IncrementCandidate()
+		candidateFill, candidateIsValid = candidateFill.IncrementCandidate()
 	}
 	return solution, solutionNum
 }

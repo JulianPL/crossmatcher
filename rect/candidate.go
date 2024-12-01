@@ -30,6 +30,18 @@ func MakeCandidateFirst(alphabet collection.Alphabet, verticalSize int, horizont
 	return Candidate{content, alphabet}, true
 }
 
+// MakeCandidateEmpty makes a candidate consisting of only wildcards.
+func MakeCandidateEmpty(alphabet collection.Alphabet, verticalSize int, horizontalSize int) Candidate {
+	content := make(Content, verticalSize)
+	for i := range content {
+		content[i] = make(lin.Content, horizontalSize)
+		for j := range content[i] {
+			content[i][j] = -1
+		}
+	}
+	return Candidate{content, alphabet}
+}
+
 // MakeCandidate makes a candidate representing a string. All wildcards are mapped to alphabet-number -1.
 func MakeCandidate(rows []string, wildcards ...rune) Candidate {
 	alphabet := collection.MakeAlphabet(strings.Join(rows, ""), wildcards...)
@@ -98,6 +110,39 @@ func (content Content) Copy() Content {
 // Copy creates an exact copy of the candidate
 func (c Candidate) Copy() Candidate {
 	return Candidate{c.Content.Copy(), c.Alphabet.Copy()}
+}
+
+func (c Candidate) Merge(cFill lin.Candidate) (Candidate, bool) {
+	if c.CountWildcards() != cFill.Len() {
+		return Candidate{}, false
+	}
+
+	alphabetMerge := c.Alphabet.Merge(cFill.Alphabet)
+	var contentMerge Content
+	currentFill := 0
+
+	for _, row := range c.Content {
+		var rowContent lin.Content
+		for _, num := range row {
+			var newNum int
+			if num != -1 {
+				char, _ := c.Alphabet.Char(num)
+				newNum, _ = alphabetMerge.Number(char)
+			} else {
+				if cFill.Content[currentFill] == -1 {
+					newNum = -1
+				} else {
+					char, _ := cFill.Alphabet.Char(cFill.Content[currentFill])
+					newNum, _ = alphabetMerge.Number(char)
+				}
+				currentFill++
+			}
+
+			rowContent = append(rowContent, newNum)
+		}
+		contentMerge = append(contentMerge, rowContent)
+	}
+	return Candidate{contentMerge, alphabetMerge}, true
 }
 
 // GetRow restrict a candidate to the given row (which leaves a linear candidate)

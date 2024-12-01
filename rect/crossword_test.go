@@ -38,10 +38,16 @@ func TestCrossword_CheckSolution(t *testing.T) {
 
 func TestCrossword_SolveBruteforce(t *testing.T) {
 	horizontal := []string{"ab|ba", "aa|bb"}
-	vertical := []string{"ba", ".."}
+	vertical := []string{"b.", ".."}
 	alphabet := collection.MakeAlphabet("ab")
 	crossword := MakeCrossword(alphabet, horizontal, vertical)
-	solution, count := crossword.SolveBruteforce()
+	constraint := MakeCandidateEmpty(alphabet, 2, 2)
+	solution, count := crossword.SolveBruteforce(constraint)
+	if count != 2 {
+		t.Errorf("SolveBruteforce did not find the correct number of solutions. Expected %d, got %d", 1, count)
+	}
+	constraint = MakeCandidate([]string{"..", "a."}, '.')
+	solution, count = crossword.SolveBruteforce(constraint)
 	if count != 1 {
 		t.Errorf("SolveBruteforce did not find the correct number of solutions. Expected %d, got %d", 1, count)
 	}
