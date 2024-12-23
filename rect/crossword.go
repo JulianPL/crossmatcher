@@ -73,3 +73,31 @@ func (crossword Crossword) SolveBruteforce(constraint Candidate) (Candidate, int
 	}
 	return solution, solutionNum
 }
+
+func (crossword Crossword) SolveLinearReductions(constraint Candidate) (Candidate, int) {
+	result := constraint.Copy()
+	for rowNumber := range crossword.Horizontal {
+		rowRule := crossword.Horizontal[rowNumber]
+		rowCrossword := lin.MakeCrossword(rowRule, crossword.Alphabet)
+		rowConstraint, _ := result.GetRow(rowNumber)
+		rowSolved, rowNumSolutions := rowCrossword.SolveBruteforce(rowConstraint)
+		if rowNumSolutions == 0 {
+			return Candidate{}, 0
+		}
+		result, _ = result.UpdateRow(rowSolved, rowNumber)
+	}
+	for colNumber := range crossword.Vertical {
+		colRule := crossword.Vertical[colNumber]
+		colCrossword := lin.MakeCrossword(colRule, crossword.Alphabet)
+		colConstraint, _ := result.GetCol(colNumber)
+		colSolved, colNumSolutions := colCrossword.SolveBruteforce(colConstraint)
+		if colNumSolutions == 0 {
+			return Candidate{}, 0
+		}
+		result, _ = result.UpdateCol(colSolved, colNumber)
+	}
+	if result.CountWildcards() == constraint.CountWildcards() {
+		return result, 1
+	}
+	return crossword.SolveLinearReductions(result)
+}

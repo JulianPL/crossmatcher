@@ -94,3 +94,16 @@ func TestCrossword_SolveBruteforce(t *testing.T) {
 		t.Errorf("SolveBruteforce did not find the correct first row. Expected %s, got %s", "ba", row.String())
 	}
 }
+
+func TestCrossword_SolveLinearReductions(t *testing.T) {
+	horizontal := []string{"a.", "ab||ba"}
+	vertical := []string{"(aa)|(bb)", ".."}
+	alphabet := collection.MakeAlphabet("ab")
+	crossword := MakeCrossword(alphabet, horizontal, vertical)
+	constraint := MakeCandidateEmpty(alphabet, 2, 2)
+	solution, _ := crossword.SolveLinearReductions(constraint)
+	expected := "a.\nab"
+	if solution.String() != expected {
+		t.Errorf("SolveLinearReductions did not find the solution. Expected %s, got %s", expected, solution.String())
+	}
+}
