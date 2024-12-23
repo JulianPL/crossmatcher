@@ -2,6 +2,7 @@ package rect
 
 import (
 	"crossmatcher/collection"
+	"crossmatcher/lin"
 	"strconv"
 	"testing"
 )
@@ -27,6 +28,24 @@ func TestCandidate_MakeCandidateFirst(t *testing.T) {
 	}
 	if expected != actual {
 		t.Errorf("MakeCandidateFirst is incorrect expected %s, actual %s", strconv.Quote(expected), strconv.Quote(actual))
+	}
+}
+
+func TestCandidate_MakeCandidateEmpty(t *testing.T) {
+	alphabet := collection.MakeAlphabet("ab")
+	candidate := MakeCandidateEmpty(alphabet, 2, 3)
+	expected := "...\n..."
+	actual := candidate.String()
+	if expected != actual {
+		t.Errorf("MakeCandidateEmpty is incorrect expected %s, actual %s", strconv.Quote(expected), strconv.Quote(actual))
+	}
+
+	alphabet = collection.MakeAlphabet("")
+	candidate = MakeCandidateEmpty(alphabet, 2, 3)
+	expected = "...\n..."
+	actual = candidate.String()
+	if expected != actual {
+		t.Errorf("MakeCandidateEmpty is incorrect expected %s, actual %s", strconv.Quote(expected), strconv.Quote(actual))
 	}
 }
 
@@ -73,6 +92,31 @@ func TestCandidate_GetRow(t *testing.T) {
 	}
 }
 
+func TestCandidate_UpdateRow(t *testing.T) {
+	candidate := MakeCandidate([]string{"a€", "ab", "2a"})
+	candidate, ok := candidate.UpdateRow(lin.MakeCandidate("c.", '.'), 1)
+	expected := "€_a"
+	actual, _ := candidate.GetCol(1)
+	if !ok {
+		t.Errorf("UpdateRow not successful.")
+	}
+	if expected != actual.String('_') {
+		t.Errorf("UpdateRow is incorrect expected second column %s, actual %s", expected, actual.String())
+	}
+	_, ok = candidate.UpdateRow(lin.MakeCandidate("ccb"), 3)
+	if ok {
+		t.Errorf("UpdateRow accepts colNumber which is too large.")
+	}
+	_, ok = candidate.UpdateRow(lin.MakeCandidate("c"), 1)
+	if ok {
+		t.Errorf("UpdateRow accepts column which is too short.")
+	}
+	_, ok = candidate.UpdateRow(lin.MakeCandidate("ccc"), 1)
+	if ok {
+		t.Errorf("UpdateRow accepts column which is too long.")
+	}
+}
+
 func TestCandidate_GetCol(t *testing.T) {
 	alphabet := collection.MakeAlphabet("0€1")
 	candidate, _ := MakeCandidateFirst(alphabet, 3, 1)
@@ -90,5 +134,30 @@ func TestCandidate_GetCol(t *testing.T) {
 	_, success = candidate.GetCol(1)
 	if success {
 		t.Errorf("Incorrect col at index 1: incorrect success reported")
+	}
+}
+
+func TestCandidate_UpdateCol(t *testing.T) {
+	candidate := MakeCandidate([]string{"a€", "ab", "2a"})
+	candidate, ok := candidate.UpdateCol(lin.MakeCandidate("cc.", '.'), 1)
+	expected := "cc_"
+	actual, _ := candidate.GetCol(1)
+	if !ok {
+		t.Errorf("UpdateCol not successful.")
+	}
+	if expected != actual.String('_') {
+		t.Errorf("UpdateCol is incorrect expected second column %s, actual %s", expected, actual.String())
+	}
+	_, ok = candidate.UpdateCol(lin.MakeCandidate("ccb"), 2)
+	if ok {
+		t.Errorf("UpdateCol accepts colNumber which is too large.")
+	}
+	_, ok = candidate.UpdateCol(lin.MakeCandidate("cc"), 1)
+	if ok {
+		t.Errorf("UpdateCol accepts column which is too short.")
+	}
+	_, ok = candidate.UpdateCol(lin.MakeCandidate("cccc"), 1)
+	if ok {
+		t.Errorf("UpdateCol accepts column which is too long.")
 	}
 }

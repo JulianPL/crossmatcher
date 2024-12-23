@@ -5,6 +5,44 @@ import (
 	"testing"
 )
 
+func TestCrossword_GetRow(t *testing.T) {
+	horizontal := []string{"ab|ba", "aa|bb"}
+	vertical := []string{"ba", ".."}
+	alphabet := collection.MakeAlphabet("ab")
+	crossword := MakeCrossword(alphabet, horizontal, vertical)
+	actual, ok := crossword.GetRow(1)
+	expected := "aa|bb"
+	if !ok {
+		t.Errorf("GetRow did not successfully get the valid row")
+	}
+	if actual.Rule != expected {
+		t.Errorf("GetRow returns wrong row. Expected %s, got %s", expected, actual.Rule)
+	}
+	_, ok = crossword.GetRow(2)
+	if ok {
+		t.Errorf("GetRow did return success for non-existing row")
+	}
+}
+
+func TestCrossword_GetCol(t *testing.T) {
+	horizontal := []string{"ab|ba", "aa|bb"}
+	vertical := []string{"ba", ".."}
+	alphabet := collection.MakeAlphabet("ab")
+	crossword := MakeCrossword(alphabet, horizontal, vertical)
+	actual, ok := crossword.GetCol(1)
+	expected := ".."
+	if !ok {
+		t.Errorf("GetCol did not successfully get the valid row")
+	}
+	if actual.Rule != expected {
+		t.Errorf("GetCol returns wrong row. Expected %s, got %s", expected, actual.Rule)
+	}
+	_, ok = crossword.GetCol(2)
+	if ok {
+		t.Errorf("GetCol did return success for non-existing row")
+	}
+}
+
 func TestCrossword_CheckSolution(t *testing.T) {
 	horizontal := []string{"ab|ba", "aa|bb"}
 	vertical := []string{"ba", ".."}

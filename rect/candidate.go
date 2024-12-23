@@ -154,6 +154,29 @@ func (c Candidate) GetRow(rowNumber int) (lin.Candidate, bool) {
 	return row, true
 }
 
+func (c Candidate) UpdateRow(rowInsert lin.Candidate, rowNumber int) (Candidate, bool) {
+	if len(c.Content) <= rowNumber {
+		return c.Copy(), false
+	}
+	if len(c.Content[rowNumber]) != len(rowInsert.Content) {
+		return c.Copy(), false
+	}
+
+	alphabet := c.Alphabet.Merge(rowInsert.Alphabet)
+	context := c.Content.Copy()
+	for colNumber := range rowInsert.Content {
+		num := rowInsert.Content[colNumber]
+		if num == -1 {
+			context[rowNumber][colNumber] = -1
+		} else {
+			char, _ := rowInsert.Alphabet.Char(num)
+			newNum, _ := alphabet.Number(char)
+			context[rowNumber][colNumber] = newNum
+		}
+	}
+	return Candidate{context, alphabet}, true
+}
+
 // GetCol restrict a candidate to the given col (which leaves a linear candidate)
 func (c Candidate) GetCol(colNumber int) (lin.Candidate, bool) {
 	var content lin.Content
@@ -165,4 +188,29 @@ func (c Candidate) GetCol(colNumber int) (lin.Candidate, bool) {
 	}
 	col, _ := lin.MakeCandidateManual(content, c.Alphabet)
 	return col, true
+}
+
+func (c Candidate) UpdateCol(colInsert lin.Candidate, colNumber int) (Candidate, bool) {
+	if len(c.Content) != len(colInsert.Content) {
+		return c.Copy(), false
+	}
+
+	alphabet := c.Alphabet.Merge(colInsert.Alphabet)
+	context := c.Content.Copy()
+
+	for rowNumber := range colInsert.Content {
+		if len(c.Content[rowNumber]) <= colNumber {
+			return c.Copy(), false
+		}
+
+		num := colInsert.Content[rowNumber]
+		if num == -1 {
+			context[rowNumber][colNumber] = -1
+		} else {
+			char, _ := colInsert.Alphabet.Char(num)
+			newNum, _ := alphabet.Number(char)
+			context[rowNumber][colNumber] = newNum
+		}
+	}
+	return Candidate{context, alphabet}, true
 }
