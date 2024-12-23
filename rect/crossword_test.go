@@ -106,4 +106,14 @@ func TestCrossword_SolveLinearReductions(t *testing.T) {
 	if solution.String() != expected {
 		t.Errorf("SolveLinearReductions did not find the solution. Expected %s, got %s", expected, solution.String())
 	}
+	horizontal = []string{"0*1{3}0*", "((01)|(10))*", "(00.)*", "0*1{4}0*", "(01)*(10)*", "0*1{3}0*"}
+	vertical = []string{"(0.)*", "((01)|(10))*", "1*01*", "(.1)*", "(01)*(11)*", "(.00)*"}
+	alphabet = collection.MakeAlphabet("01")
+	crossword = MakeCrossword(alphabet, horizontal, vertical)
+	constraint = MakeCandidateEmpty(alphabet, 6, 6)
+	solution, _ = crossword.SolveLinearReductions(constraint)
+	expected = "011100\n100110\n001000\n011110\n011010\n001110"
+	if solution.String() != expected {
+		t.Errorf("SolveLinearReductions did not find the solution. Expected %s, got %s", expected, solution.String())
+	}
 }
