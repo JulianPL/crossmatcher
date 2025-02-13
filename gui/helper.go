@@ -2,7 +2,10 @@ package gui
 
 import (
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"image/color"
 )
 
 func MakeCharBox(char rune) *widget.Entry {
@@ -20,6 +23,49 @@ func MakeCharBox(char rune) *widget.Entry {
 		}
 	}
 	return entry
+}
+
+func MakeTextBox(text, placeHolder string) *fyne.Container {
+	entry := widget.NewEntry()
+	entry.SetText(text)
+	entry.SetPlaceHolder(placeHolder)
+	spacer := MakeTextBoxSpacer()
+
+	return container.NewStack(spacer, entry)
+}
+
+func MakeCharBoxSpacer() fyne.CanvasObject {
+	mock := widget.NewEntry()
+	mock.SetText("*")
+	mock.SetPlaceHolder("*")
+	// Limit width to single character
+	mock.Resize(fyne.NewSize(30, 30))
+	mockSize := mock.MinSize()
+
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.Resize(mockSize)
+	spacer.SetMinSize(mockSize)
+
+	return spacer
+}
+
+func MakeTextBoxSpacer() fyne.CanvasObject {
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.Resize(fyne.NewSize(400, 30))
+	spacer.SetMinSize(fyne.NewSize(400, 30))
+
+	return spacer
+}
+
+func MakeEntrySpacer() fyne.CanvasObject {
+	mock := widget.NewEntry()
+	mockSize := mock.MinSize()
+
+	spacer := canvas.NewRectangle(color.Black)
+	spacer.Resize(mockSize)
+	spacer.SetMinSize(mockSize)
+
+	return spacer
 }
 
 func MakeCharLine(box *fyne.Container, str string) {

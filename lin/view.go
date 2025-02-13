@@ -88,8 +88,8 @@ func Window() {
 	window := myApp.NewWindow("Linear Regex Crossword")
 
 	// Create and set the content
-	linView := NewView(window, "a|b", "ab", "ababa")
-	window.SetContent(linView.content)
+	view := NewView(window, "a|b", "ab", "ababa")
+	window.SetContent(view.content)
 
 	// Set a reasonable starting size
 	window.Resize(fyne.NewSize(400, 300))
