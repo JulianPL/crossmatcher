@@ -18,6 +18,14 @@ func MakeAlphabet(characters string, wildcards ...rune) Alphabet {
 	return alphabet
 }
 
+func (alphabet Alphabet) String() string {
+	charString := ""
+	for _, char := range alphabet.char {
+		charString += string(char)
+	}
+	return charString
+}
+
 func (alphabet Alphabet) Copy() Alphabet {
 	newAlphabet := Alphabet{make(map[rune]int), make(map[int]rune)}
 	for key, value := range alphabet.number {
