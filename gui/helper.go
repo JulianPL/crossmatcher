@@ -4,6 +4,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"image/color"
 )
@@ -49,21 +50,47 @@ func MakeCharBoxSpacer() fyne.CanvasObject {
 	return spacer
 }
 
-func MakeTextBoxSpacer() fyne.CanvasObject {
-	spacer := canvas.NewRectangle(color.Transparent)
-	spacer.Resize(fyne.NewSize(400, 30))
-	spacer.SetMinSize(fyne.NewSize(400, 30))
+func MakeCharBoxArrow(upward bool) fyne.CanvasObject {
+	spacer := MakeCharBoxSpacer()
 
-	return spacer
+	var arrow *canvas.Text
+	if upward {
+		arrow = canvas.NewText("\u2B67", theme.Color(theme.ColorNameForeground))
+	} else {
+		arrow = canvas.NewText("\u2B68", theme.Color(theme.ColorNameForeground))
+	}
+
+	arrow.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
+	arrow.TextSize = 30
+	arrow.Alignment = fyne.TextAlignCenter
+	arrow.Resize(spacer.MinSize())
+
+	return arrow
 }
 
-func MakeEntrySpacer() fyne.CanvasObject {
-	mock := widget.NewEntry()
-	mockSize := mock.MinSize()
+func MakeCharBoxSpacerRow(length int) *fyne.Container {
+	row := container.NewHBox()
 
-	spacer := canvas.NewRectangle(color.Black)
-	spacer.Resize(mockSize)
-	spacer.SetMinSize(mockSize)
+	for i := 0; i < length; i++ {
+		box := MakeCharBoxSpacer()
+		row.Add(box)
+	}
+
+	return row
+}
+
+func MakeCharBoxSpacerGrid(rows, cols int) *fyne.Container {
+	row := container.NewVBox()
+	for i := 0; i < rows; i++ {
+		row.Add(MakeCharBoxSpacerRow(cols))
+	}
+	return row
+}
+
+func MakeTextBoxSpacer() fyne.CanvasObject {
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.Resize(fyne.NewSize(300, 30))
+	spacer.SetMinSize(fyne.NewSize(300, 30))
 
 	return spacer
 }
@@ -83,4 +110,11 @@ func GetCharLine(box *fyne.Container) string {
 		}
 	}
 	return ret
+}
+
+func ReverseBox(container *fyne.Container) *fyne.Container {
+	for i, j := 0, len(container.Objects)-1; i < j; i, j = i+1, j-1 {
+		container.Objects[i], container.Objects[j] = container.Objects[j], container.Objects[i]
+	}
+	return container
 }
