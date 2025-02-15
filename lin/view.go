@@ -81,6 +81,9 @@ func (v *View) onUpdateLength() {
 	time.AfterFunc(50*time.Millisecond, func() {
 		v.window.Resize(fyne.NewSize(400, 300))
 	})
+	/* TODO try approach from rect instead
+	v.window.SetContent(v.content)
+	v.window.Resize(fyne.NewSize(400, 300))*/
 }
 
 func Window() {

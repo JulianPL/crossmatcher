@@ -6,66 +6,67 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"slices"
 	"strconv"
+	"strings"
 )
 
 type View struct {
-	window            fyne.Window
-	model             *Model
-	widthEntry        *fyne.Container
-	heightEntry       *fyne.Container
-	horizontalEntries *fyne.Container
-	verticalEntries   *fyne.Container
-	alphabetEntry     *fyne.Container
-	charBoxes         *fyne.Container
-	content           *fyne.Container
+	window        fyne.Window
+	model         *Model
+	widthEntry    *fyne.Container
+	heightEntry   *fyne.Container
+	alphabetEntry *fyne.Container
+	fullSpace     *fyne.Container
+	hRules        *fyne.Container
+	vRules        *fyne.Container
+	hArrows       *fyne.Container
+	vArrows       *fyne.Container
+	charBoxes     *fyne.Container
+	content       *fyne.Container
 }
 
-func NewView() *View {
+func NewView(window fyne.Window, vRules, hRules []string, alphabet string, candidate []string) *View {
 	v := &View{}
+	v.window = window
 
-	width := 10
-	height := 6
+	return v.updateView(vRules, hRules, alphabet, candidate)
+}
 
-	vRuleStrings := make([]string, width)
-	for i := 0; i < width; i++ {
-		vRuleStrings[i] = strconv.Itoa(i)
-	}
-	hRuleStrings := make([]string, height)
-	for i := 0; i < height; i++ {
-		hRuleStrings[i] = strconv.Itoa(i)
-	}
-	candidate := make([]string, height)
-	for i := 0; i < height; i++ {
-		candidate[i] = "0123456789"
-	}
+func (v *View) updateView(vRules, hRules []string, alphabet string, candidate []string) *View {
+	width := len(vRules)
+	height := len(hRules)
 
-	fullSpace := container.NewHBox(gui.MakeTextBoxSpacer(), gui.MakeCharBoxSpacerRow(height+width))
+	v.fullSpace = container.NewHBox(gui.MakeTextBoxSpacer(), gui.MakeCharBoxSpacerRow(height+width+1))
 
 	v.widthEntry = gui.MakeTextBox(strconv.Itoa(len([]rune(candidate[0]))), "Width")
 	v.heightEntry = gui.MakeTextBox(strconv.Itoa(len(candidate)), "Height")
-	v.alphabetEntry = gui.MakeTextBox("abc", "Alphabet")
+	v.alphabetEntry = gui.MakeTextBox(alphabet, "Alphabet")
 
-	vRules := gui.ReverseBox(addRuleStrings(createRuleRows(width, height), vRuleStrings))
-	hRules := addRuleStrings(createRuleRows(height, width), hRuleStrings)
+	v.vRules = gui.ReverseBox(addRuleStrings(createRuleRows(width, height), vRules))
+	v.hRules = addRuleStrings(createRuleRows(height, width), hRules)
 
-	vArrows := gui.ReverseBox(changeToArrowLines(createRuleRows(width, height), false))
-	hArrows := changeToArrowLines(createRuleRows(height, width), true)
+	v.vArrows = gui.ReverseBox(changeToArrowLines(createRuleRows(width, height), false))
+	v.hArrows = changeToArrowLines(createRuleRows(height, width), true)
 
 	v.charBoxes = gui.MakeCharBoxSpacerGrid(width+height-1, width+height-1)
 	v.charBoxes = PopulateCandidateSubgrid(v.charBoxes, width, height)
 	v.charBoxes = AddCandidateChars(v.charBoxes, candidate)
 
-	ruleLayer := container.NewVBox(vRules,
+	updateLengthButton := gui.MakeButton("Reset Crossword and Update Length", v.onUpdateLength)
+	emptyCandidateButton := gui.MakeButton("Empty Candidate", v.onEmptyCandidate)
+	solveButton := gui.MakeButton("Solve", v.onSolve)
+
+	ruleLayer := container.NewVBox(v.vRules,
 		gui.MakeCharBoxSpacer(),
 		gui.MakeCharBoxSpacer(),
 		gui.MakeCharBoxSpacer(),
-		hRules)
+		v.hRules)
 
 	arrowLayer := container.NewVBox(gui.MakeCharBoxSpacer(),
-		vArrows,
+		v.vArrows,
 		gui.MakeCharBoxSpacer(),
-		hArrows,
+		v.hArrows,
 		gui.MakeCharBoxSpacer())
 
 	candidateLayer := container.NewVBox(gui.MakeCharBoxSpacer(),
@@ -74,16 +75,80 @@ func NewView() *View {
 		gui.MakeCharBoxSpacer(),
 		gui.MakeCharBoxSpacer())
 
-	controlLayer := container.NewVBox(container.NewHBox(fullSpace, widget.NewLabel("Width:")),
-		container.NewHBox(fullSpace, v.widthEntry),
-		container.NewHBox(fullSpace, widget.NewLabel("Height:")),
-		container.NewHBox(fullSpace, v.heightEntry),
-		container.NewHBox(fullSpace, widget.NewLabel("Alphabet:")),
-		container.NewHBox(fullSpace, v.alphabetEntry))
+	controlLayer := container.NewVBox(container.NewHBox(v.fullSpace, widget.NewLabel("Width:")),
+		container.NewHBox(v.fullSpace, v.widthEntry),
+		container.NewHBox(v.fullSpace, widget.NewLabel("Height:")),
+		container.NewHBox(v.fullSpace, v.heightEntry),
+		container.NewHBox(v.fullSpace, widget.NewLabel("Alphabet:")),
+		container.NewHBox(v.fullSpace, v.alphabetEntry),
+		container.NewHBox(v.fullSpace),
+		container.NewHBox(v.fullSpace, updateLengthButton),
+		container.NewHBox(v.fullSpace),
+		container.NewHBox(v.fullSpace, emptyCandidateButton),
+		container.NewHBox(v.fullSpace),
+		container.NewHBox(v.fullSpace, solveButton))
 
 	v.content = container.NewStack(ruleLayer, arrowLayer, candidateLayer, controlLayer)
 
 	return v
+}
+
+func (v *View) onUpdateLength() {
+	widthString, _ := gui.GetEntryText(v.widthEntry)
+	heightString, _ := gui.GetEntryText(v.heightEntry)
+	alphabetString, _ := gui.GetEntryText(v.alphabetEntry)
+	width, err := strconv.Atoi(widthString)
+	if err != nil {
+		return
+	}
+	height, err := strconv.Atoi(heightString)
+	if err != nil {
+		return
+	}
+
+	vRuleStrings := make([]string, width)
+	for i := 0; i < width; i++ {
+		vRuleStrings[i] = ""
+	}
+	hRuleStrings := make([]string, height)
+	for i := 0; i < height; i++ {
+		hRuleStrings[i] = ""
+	}
+	candidate := make([]string, height)
+	for i := 0; i < height; i++ {
+		candidate[i] = strings.Repeat(".", width)
+	}
+
+	v.updateView(vRuleStrings, hRuleStrings, alphabetString, candidate)
+
+	v.window.SetContent(v.content)
+	v.window.Resize(fyne.NewSize(400, 300))
+}
+
+func (v *View) onEmptyCandidate() {
+	width := len(v.vRules.Objects)
+	height := len(v.hRules.Objects)
+
+	candidate := make([]string, height)
+	for i := 0; i < height; i++ {
+		candidate[i] = strings.Repeat(".", width)
+	}
+
+	AddCandidateChars(v.charBoxes, candidate)
+}
+
+func (v *View) onSolve() {
+	width := len(v.vRules.Objects)
+	height := len(v.hRules.Objects)
+	vRules := readRuleRows(v.vRules)
+	slices.Reverse(vRules)
+	hRules := readRuleRows(v.hRules)
+	alphabet, _ := gui.GetEntryText(v.alphabetEntry)
+	candidate := GetCandidateChars(v.charBoxes, width, height)
+	v.model = NewModel(vRules, hRules, alphabet, candidate)
+	candidate = v.model.Solve()
+	AddCandidateChars(v.charBoxes, candidate)
+
 }
 
 func getCandidateBox(grid *fyne.Container, row, column, width int) *fyne.CanvasObject {
@@ -172,6 +237,15 @@ func addRuleStrings(ruleLines *fyne.Container, rules []string) *fyne.Container {
 	return ruleLines
 }
 
+func readRuleRows(rows *fyne.Container) []string {
+	ret := make([]string, len(rows.Objects))
+	for i, row := range rows.Objects {
+		entry, _ := getEntryFromRuleLine(row)
+		ret[i] = entry.Text
+	}
+	return ret
+}
+
 func getEntryFromRuleLine(line fyne.CanvasObject) (*widget.Entry, bool) {
 	row, ok := line.(*fyne.Container)
 	if !ok {
@@ -204,8 +278,24 @@ func Window() {
 	myApp := app.New()
 	window := myApp.NewWindow("Rectangular Regex Crossword")
 
+	width := 6
+	height := 6
+
+	vRuleStrings := make([]string, width)
+	for i := 0; i < width; i++ {
+		vRuleStrings[i] = "00.*0"
+	}
+	hRuleStrings := make([]string, height)
+	for i := 0; i < height; i++ {
+		hRuleStrings[i] = "00.*0"
+	}
+	candidate := make([]string, height)
+	for i := 0; i < height; i++ {
+		candidate[i] = strings.Repeat(".", width)
+	}
+
 	// Create and set the content
-	linView := NewView()
+	linView := NewView(window, vRuleStrings, hRuleStrings, "01", candidate)
 	window.SetContent(linView.content)
 
 	// Set a reasonable starting size

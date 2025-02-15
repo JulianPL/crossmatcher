@@ -35,6 +35,13 @@ func MakeTextBox(text, placeHolder string) *fyne.Container {
 	return container.NewStack(spacer, entry)
 }
 
+func MakeButton(label string, tapped func()) *fyne.Container {
+	button := widget.NewButton(label, tapped)
+	spacer := MakeTextBoxSpacer()
+
+	return container.NewStack(spacer, button)
+}
+
 func MakeCharBoxSpacer() fyne.CanvasObject {
 	mock := widget.NewEntry()
 	mock.SetText("*")
@@ -110,6 +117,15 @@ func GetCharLine(box *fyne.Container) string {
 		}
 	}
 	return ret
+}
+
+// GetEntryText retrieves the entry.Text out of stacks of (spacer, entry)
+func GetEntryText(box *fyne.Container) (string, bool) {
+	entry, ok := box.Objects[1].(*widget.Entry)
+	if !ok {
+		return "", false
+	}
+	return entry.Text, true
 }
 
 func ReverseBox(container *fyne.Container) *fyne.Container {
