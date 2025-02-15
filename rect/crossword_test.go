@@ -93,6 +93,17 @@ func TestCrossword_SolveBruteforce(t *testing.T) {
 	if row.String() != "ba" {
 		t.Errorf("SolveBruteforce did not find the correct first row. Expected %s, got %s", "ba", row.String())
 	}
+	/* Performance Test: about 250,000 candidates in about 5 seconds
+	horizontal = []string{".*", ".*", "a.*"}
+	vertical = []string{".*", ".*", ".*"}
+	alphabet = collection.MakeAlphabet("abcd")
+	crossword = MakeCrossword(alphabet, horizontal, vertical)
+	constraint = MakeCandidate([]string{"...", "...", "..."}, '.')
+	solution, _ = crossword.SolveBruteforce(constraint)
+	row, _ = solution.GetRow(2)
+	if row.String() != "abb" {
+		t.Errorf("SolveBruteforce did not find the correct first row. Expected %s, got %s", "a..", row.String())
+	} */
 }
 
 func TestCrossword_SolveLinearReductions(t *testing.T) {
