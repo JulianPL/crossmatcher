@@ -2,11 +2,13 @@ package rect
 
 import (
 	"crossmatcher/gui"
+	"errors"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -53,6 +55,9 @@ func (v *View) updateView(vRules, hRules []string, alphabet string, candidate []
 	v.charBoxes = gui.MakeCharBoxSpacerGrid(width+height-1, width+height-1)
 	v.charBoxes = PopulateCandidateSubgrid(v.charBoxes, width, height)
 	v.charBoxes = AddCandidateChars(v.charBoxes, candidate)
+
+	v.addRuleValidators()
+	v.addRuleValidatorTriggers()
 
 	importExportButton := gui.MakeButton("Import/Export", v.onImportExport)
 	updateLengthButton := gui.MakeButton("Reset Crossword and Update Length", v.onUpdateLength)
@@ -241,6 +246,36 @@ func AddCandidateChars(grid *fyne.Container, candidate []string) *fyne.Container
 	return grid
 }
 
+func (v *View) addRuleValidatorTriggers() {
+	width := len(v.vRules.Objects)
+	height := len(v.hRules.Objects)
+	for row := range height {
+		for col := range width {
+			box := getCandidateBox(v.charBoxes, col, row, width)
+			if box, ok := (*box).(*widget.Entry); ok {
+				originalOnChanged := box.OnChanged
+				box.OnChanged = func(s string) {
+					if originalOnChanged != nil {
+						originalOnChanged(s)
+					}
+
+					// Trigger validation of all rule entries
+					for _, row := range v.hRules.Objects {
+						if entry, ok := getEntryFromRuleLine(row); ok {
+							_ = entry.Validate() // Triggers the validator
+						}
+					}
+					for _, col := range v.vRules.Objects {
+						if entry, ok := getEntryFromRuleLine(col); ok {
+							_ = entry.Validate()
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 func GetCandidateChars(grid *fyne.Container, width, height int) []string {
 	var ret []string
 	for h := 0; h < height; h++ {
@@ -292,6 +327,52 @@ func addRuleStrings(ruleLines *fyne.Container, rules []string) *fyne.Container {
 		}
 	}
 	return ruleLines
+}
+
+func (v *View) addRuleValidators() {
+	for i, row := range v.hRules.Objects {
+		if entry, ok := getEntryFromRuleLine(row); ok {
+			entry.Validator = func(s string) error {
+				width := len(v.vRules.Objects)
+				height := len(v.hRules.Objects)
+				candidate := GetCandidateChars(v.charBoxes, width, height)
+
+				candidateRow := candidate[i]
+				rowRule := "^(" + s + ")$"
+				matched, _ := regexp.MatchString(rowRule, candidateRow)
+
+				if !matched {
+					return errors.New("rule does not match")
+				}
+				return nil // Shows checkmark
+			}
+		}
+	}
+
+	for i, column := range v.vRules.Objects {
+		if entry, ok := getEntryFromRuleLine(column); ok {
+			entry.Validator = func(s string) error {
+				width := len(v.vRules.Objects)
+				height := len(v.hRules.Objects)
+				candidate := GetCandidateChars(v.charBoxes, width, height)
+
+				candidateColumn := ""
+				for _, candidateRow := range candidate {
+					// The vertical rules are reversed
+					if len([]rune(candidateRow)) > width-1-i {
+						candidateColumn += string([]rune(candidateRow)[width-1-i])
+					}
+				}
+				rowRule := "^(" + s + ")$"
+				matched, _ := regexp.MatchString(rowRule, candidateColumn)
+
+				if !matched {
+					return errors.New("rule does not match")
+				}
+				return nil // Shows checkmark
+			}
+		}
+	}
 }
 
 func readRuleRows(rows *fyne.Container) []string {
