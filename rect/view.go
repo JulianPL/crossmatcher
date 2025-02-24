@@ -5,6 +5,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"slices"
 	"strconv"
@@ -53,6 +54,7 @@ func (v *View) updateView(vRules, hRules []string, alphabet string, candidate []
 	v.charBoxes = PopulateCandidateSubgrid(v.charBoxes, width, height)
 	v.charBoxes = AddCandidateChars(v.charBoxes, candidate)
 
+	importExportButton := gui.MakeButton("Import/Export", v.onImportExport)
 	updateLengthButton := gui.MakeButton("Reset Crossword and Update Length", v.onUpdateLength)
 	emptyCandidateButton := gui.MakeButton("Empty Candidate", v.onEmptyCandidate)
 	solveButton := gui.MakeButton("Solve", v.onSolve)
@@ -75,7 +77,9 @@ func (v *View) updateView(vRules, hRules []string, alphabet string, candidate []
 		gui.MakeCharBoxSpacer(),
 		gui.MakeCharBoxSpacer())
 
-	controlLayer := container.NewVBox(container.NewHBox(v.fullSpace, widget.NewLabel("Width:")),
+	controlLayer := container.NewVBox(container.NewHBox(v.fullSpace, importExportButton),
+		container.NewHBox(v.fullSpace),
+		container.NewHBox(v.fullSpace, widget.NewLabel("Width:")),
 		container.NewHBox(v.fullSpace, v.widthEntry),
 		container.NewHBox(v.fullSpace, widget.NewLabel("Height:")),
 		container.NewHBox(v.fullSpace, v.heightEntry),
@@ -91,6 +95,59 @@ func (v *View) updateView(vRules, hRules []string, alphabet string, candidate []
 	v.content = container.NewStack(ruleLayer, arrowLayer, candidateLayer, controlLayer)
 
 	return v
+}
+
+func (v *View) onImportExport() {
+	textArea := widget.NewMultiLineEntry()
+
+	width := len(v.vRules.Objects)
+	height := len(v.hRules.Objects)
+	alphabet, _ := gui.GetEntryText(v.alphabetEntry)
+	vRules := readRuleRows(v.vRules)
+	slices.Reverse(vRules)
+	hRules := readRuleRows(v.hRules)
+	candidate := GetCandidateChars(v.charBoxes, width, height)
+
+	text := alphabet + "\n\n" +
+		strings.Join(hRules, "\n") + "\n\n" +
+		strings.Join(vRules, "\n") + "\n\n" +
+		strings.Join(candidate, "\n")
+
+	textArea.SetText(text)
+	textArea.Resize(fyne.NewSize(300, 400))
+
+	importFunc := func(importButton bool) {
+		if importButton {
+			v.onImport(textArea.Text)
+		}
+	}
+
+	dialogWindow := dialog.NewCustomConfirm("Import/Export", "Import", "Abort", textArea, importFunc, v.window)
+	dialogWindow.Resize(fyne.NewSize(300, 400))
+	dialogWindow.Show()
+}
+
+func (v *View) onImport(textbox string) {
+	textboxSplit := strings.Split(textbox, "\n\n")
+	alphabet := textboxSplit[0]
+	vRules := strings.Split(textboxSplit[2], "\n")
+	hRules := strings.Split(textboxSplit[1], "\n")
+	candidate := strings.Split(textboxSplit[3], "\n")
+
+	width := len(vRules)
+	height := len(hRules)
+
+	if len(candidate) != height || len([]rune(candidate[0])) != width {
+		candidate = make([]string, height)
+		for i := 0; i < height; i++ {
+			candidate[i] = strings.Repeat(".", width)
+		}
+	}
+
+	v.updateView(vRules, hRules, alphabet, candidate)
+
+	v.window.SetContent(v.content)
+	v.window.Resize(fyne.NewSize(400, 300))
 }
 
 func (v *View) onUpdateLength() {
