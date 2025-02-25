@@ -20,6 +20,21 @@ func NewModel(vRules, hRules []string, alphabetString string, candidate []string
 	return m
 }
 
+func NewModelRandom(alphabetString string, height, width int) *Model {
+	m := &Model{}
+	alphabet := collection.MakeAlphabet(alphabetString, '.')
+
+	m.crossword = MakeCrosswordRandomTrivial(alphabet, height, width)
+
+	candidate := make([]string, height)
+	for i := range height {
+		candidate[i] = strings.Repeat(".", width)
+	}
+	m.candidate = MakeCandidate(candidate, '.')
+
+	return m
+}
+
 func (m *Model) Solve() []string {
 	candidate, count := m.crossword.SolveLinearReductions(m.candidate)
 	width := len(m.crossword.Vertical)

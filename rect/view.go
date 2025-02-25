@@ -61,6 +61,7 @@ func (v *View) updateView(vRules, hRules []string, alphabet string, candidate []
 
 	importExportButton := gui.MakeButton("Import/Export", v.onImportExport)
 	updateLengthButton := gui.MakeButton("Reset Crossword and Update Length", v.onUpdateLength)
+	createCrosswordButton := gui.MakeButton("Generate Random Crossword", v.onCreateCrossword)
 	emptyCandidateButton := gui.MakeButton("Empty Candidate", v.onEmptyCandidate)
 	solveButton := gui.MakeButton("Solve", v.onSolve)
 
@@ -92,6 +93,7 @@ func (v *View) updateView(vRules, hRules []string, alphabet string, candidate []
 		container.NewHBox(v.fullSpace, v.alphabetEntry),
 		container.NewHBox(v.fullSpace),
 		container.NewHBox(v.fullSpace, updateLengthButton),
+		container.NewHBox(v.fullSpace, createCrosswordButton),
 		container.NewHBox(v.fullSpace),
 		container.NewHBox(v.fullSpace, emptyCandidateButton),
 		container.NewHBox(v.fullSpace),
@@ -176,6 +178,34 @@ func (v *View) onUpdateLength() {
 	for i := 0; i < height; i++ {
 		hRuleStrings[i] = ""
 	}
+	candidate := make([]string, height)
+	for i := 0; i < height; i++ {
+		candidate[i] = strings.Repeat(".", width)
+	}
+
+	v.updateView(vRuleStrings, hRuleStrings, alphabetString, candidate)
+
+	v.window.SetContent(v.content)
+	v.window.Resize(fyne.NewSize(400, 300))
+}
+
+func (v *View) onCreateCrossword() {
+	widthString, _ := gui.GetEntryText(v.widthEntry)
+	heightString, _ := gui.GetEntryText(v.heightEntry)
+	alphabetString, _ := gui.GetEntryText(v.alphabetEntry)
+	width, err := strconv.Atoi(widthString)
+	if err != nil {
+		return
+	}
+	height, err := strconv.Atoi(heightString)
+	if err != nil {
+		return
+	}
+
+	m := NewModelRandom(alphabetString, height, width)
+
+	vRuleStrings := m.crossword.Vertical
+	hRuleStrings := m.crossword.Horizontal
 	candidate := make([]string, height)
 	for i := 0; i < height; i++ {
 		candidate[i] = strings.Repeat(".", width)

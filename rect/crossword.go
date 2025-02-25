@@ -3,6 +3,7 @@ package rect
 import (
 	"crossmatcher/collection"
 	"crossmatcher/lin"
+	"math/rand"
 )
 
 type Crossword struct {
@@ -14,6 +15,28 @@ type Crossword struct {
 // MakeCrossword makes a crossword from two given sets of strings and an underlying alphabet.
 func MakeCrossword(alphabet collection.Alphabet, horizontal []string, vertical []string) Crossword {
 	return Crossword{horizontal, vertical, alphabet}
+}
+
+// MakeCrosswordRandomTrivial makes a random trivial crossword over an underlying alphabet with given size.
+func MakeCrosswordRandomTrivial(alphabet collection.Alphabet, height, width int) Crossword {
+	runes := []rune(alphabet.String())
+	solution := make([][]rune, height)
+	for i := range height {
+		row := make([]rune, width)
+		for j := range width {
+			row[j] = runes[rand.Intn(len(runes))]
+		}
+		solution[i] = row
+	}
+	horizontal := make([]string, height)
+	vertical := make([]string, width)
+	for i := range height {
+		for j := range width {
+			horizontal[i] += string(solution[i][j])
+			vertical[j] += string(solution[i][j])
+		}
+	}
+	return MakeCrossword(alphabet, horizontal, vertical)
 }
 
 func (crossword Crossword) GetRow(rowNumber int) (lin.Crossword, bool) {
