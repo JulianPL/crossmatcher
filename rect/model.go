@@ -24,7 +24,7 @@ func NewModelRandom(alphabetString string, height, width int) *Model {
 	m := &Model{}
 	alphabet := collection.MakeAlphabet(alphabetString, '.')
 
-	m.crossword = MakeCrosswordRandomTrivial(alphabet, height, width)
+	m.crossword = MakeCrosswordRandomGrouped(alphabet, height, width)
 
 	candidate := make([]string, height)
 	for i := range height {
@@ -37,6 +37,7 @@ func NewModelRandom(alphabetString string, height, width int) *Model {
 
 func (m *Model) Solve() []string {
 	candidate, count := m.crossword.SolveLinearReductions(m.candidate)
+
 	width := len(m.crossword.Vertical)
 	height := len(m.crossword.Horizontal)
 

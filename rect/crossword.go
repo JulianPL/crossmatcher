@@ -39,31 +39,95 @@ func MakeCrosswordRandomTrivial(alphabet collection.Alphabet, height, width int)
 	return MakeCrossword(alphabet, horizontal, vertical)
 }
 
-func (crossword Crossword) GetRow(rowNumber int) (lin.Crossword, bool) {
-	if len(crossword.Horizontal) <= rowNumber {
+func SeparateRuleArrayIntoBlocks(rules []string, alphabet collection.Alphabet) []string {
+	ret := make([]string, len(rules))
+	for ruleNumber := range rules {
+		row := lin.MakeCrossword(rules[ruleNumber], alphabet)
+		row = row.SeparateIntoBlocks()
+		ret[ruleNumber] = row.Rule
+	}
+	return ret
+}
+
+func (c Crossword) hasUniqueSolution() bool {
+	candidate := MakeCandidateEmpty(c.Alphabet, len(c.Vertical), len(c.Horizontal))
+	solution, _ := c.SolveLinearReductions(candidate)
+	return c.CheckSolution(solution)
+}
+
+func (c Crossword) tryRuleChange(ruleRef *string, newRule string) Crossword {
+	if newRule == "" {
+		return c
+	}
+	oldRule := *ruleRef
+	*ruleRef = newRule
+	if !c.hasUniqueSolution() {
+		*ruleRef = oldRule
+	}
+	return c
+}
+
+func (c Crossword) MergeBlocks(ruleRef *string) Crossword {
+	oldRule := *ruleRef
+	row := lin.MakeCrossword(oldRule, c.Alphabet)
+	row = row.MergeRandomBlocks()
+	newRule := row.Rule
+	return c.tryRuleChange(ruleRef, newRule)
+}
+
+func (c Crossword) getRandomRuleRef() *string {
+	dimSum := len(c.Horizontal) + len(c.Vertical)
+	rule := rand.Intn(dimSum)
+	if rule < len(c.Horizontal) {
+		return &c.Horizontal[rule]
+
+	} else {
+		rule -= len(c.Horizontal)
+		return &c.Vertical[rule]
+	}
+}
+
+func (c Crossword) transformSingleRule() Crossword {
+	ruleRef := c.getRandomRuleRef()
+	//Todo randomly select different transformation methods
+	return c.MergeBlocks(ruleRef)
+}
+
+func MakeCrosswordRandomGrouped(alphabet collection.Alphabet, height, width int) Crossword {
+	ret := MakeCrosswordRandomTrivial(alphabet, height, width)
+	ret.Horizontal = SeparateRuleArrayIntoBlocks(ret.Horizontal, alphabet)
+	ret.Vertical = SeparateRuleArrayIntoBlocks(ret.Vertical, alphabet)
+	for range 100 {
+		ret = ret.transformSingleRule()
+	}
+	return ret
+}
+
+func (c Crossword) GetRow(rowNumber int) (lin.Crossword, bool) {
+	if len(c.Horizontal) <= rowNumber {
 		return lin.MakeCrossword("", collection.MakeAlphabet("")), false
 	}
-	row := lin.MakeCrossword(crossword.Horizontal[rowNumber], crossword.Alphabet)
+	row := lin.MakeCrossword(c.Horizontal[rowNumber], c.Alphabet)
 	return row, true
 }
 
-func (crossword Crossword) GetCol(colNumber int) (lin.Crossword, bool) {
-	if len(crossword.Vertical) <= colNumber {
+func (c Crossword) GetCol(colNumber int) (lin.Crossword, bool) {
+	if len(c.Vertical) <= colNumber {
 		return lin.MakeCrossword("", collection.MakeAlphabet("")), false
 	}
-	col := lin.MakeCrossword(crossword.Vertical[colNumber], crossword.Alphabet)
+	col := lin.MakeCrossword(c.Vertical[colNumber], c.Alphabet)
 	return col, true
 }
 
 // CheckSolution checks, whether a candidate without wildcards satisfies a crossword.
-func (crossword Crossword) CheckSolution(candidate Candidate) bool {
+func (c Crossword) CheckSolution(candidate Candidate) bool {
 	if candidate.CountWildcards() > 0 {
 		return false
 	}
 
 	for rowNumber := range candidate.Content {
 		rowContent, _ := candidate.GetRow(rowNumber)
-		rowCrossword, _ := crossword.GetRow(rowNumber)
+		rowCrossword, _ := c.GetRow(rowNumber)
 		if !rowCrossword.CheckSolution(rowContent) {
 			return false
 		}
@@ -71,7 +135,7 @@ func (crossword Crossword) CheckSolution(candidate Candidate) bool {
 
 	for colNumber := range candidate.Content[0] {
 		colContent, _ := candidate.GetCol(colNumber)
-		colCrossword, _ := crossword.GetCol(colNumber)
+		colCrossword, _ := c.GetCol(colNumber)
 		if !colCrossword.CheckSolution(colContent) {
 			return false
 		}
@@ -80,15 +144,15 @@ func (crossword Crossword) CheckSolution(candidate Candidate) bool {
 }
 
 // SolveBruteforce checks all candidates that fill the wildcards given by the constraint.
-func (crossword Crossword) SolveBruteforce(constraint Candidate) (Candidate, int) {
-	candidateFill, _ := lin.MakeCandidateFirst(crossword.Alphabet, constraint.CountWildcards())
+func (c Crossword) SolveBruteforce(constraint Candidate) (Candidate, int) {
+	candidateFill, _ := lin.MakeCandidateFirst(c.Alphabet, constraint.CountWildcards())
 
 	candidateIsValid := true
 	solutionNum := 0
 	var solution Candidate
 	for candidateIsValid {
 		candidateMerge, _ := constraint.Merge(candidateFill)
-		if crossword.CheckSolution(candidateMerge) {
+		if c.CheckSolution(candidateMerge) {
 			solutionNum++
 			solution = candidateMerge
 		}
@@ -97,11 +161,11 @@ func (crossword Crossword) SolveBruteforce(constraint Candidate) (Candidate, int
 	return solution, solutionNum
 }
 
-func (crossword Crossword) SolveLinearReductions(constraint Candidate) (Candidate, int) {
+func (c Crossword) SolveLinearReductions(constraint Candidate) (Candidate, int) {
 	next := constraint.Copy()
-	for rowNumber := range crossword.Horizontal {
-		rowRule := crossword.Horizontal[rowNumber]
-		rowCrossword := lin.MakeCrossword(rowRule, crossword.Alphabet)
+	for rowNumber := range c.Horizontal {
+		rowRule := c.Horizontal[rowNumber]
+		rowCrossword := lin.MakeCrossword(rowRule, c.Alphabet)
 		rowConstraint, _ := next.GetRow(rowNumber)
 		rowSolved, rowNumSolutions := rowCrossword.SolveBruteforce(rowConstraint)
 		if rowNumSolutions == 0 {
@@ -109,9 +173,9 @@ func (crossword Crossword) SolveLinearReductions(constraint Candidate) (Candidat
 		}
 		next, _ = next.UpdateRow(rowSolved, rowNumber)
 	}
-	for colNumber := range crossword.Vertical {
-		colRule := crossword.Vertical[colNumber]
-		colCrossword := lin.MakeCrossword(colRule, crossword.Alphabet)
+	for colNumber := range c.Vertical {
+		colRule := c.Vertical[colNumber]
+		colCrossword := lin.MakeCrossword(colRule, c.Alphabet)
 		colConstraint, _ := next.GetCol(colNumber)
 		colSolved, colNumSolutions := colCrossword.SolveBruteforce(colConstraint)
 		if colNumSolutions == 0 {
@@ -122,6 +186,6 @@ func (crossword Crossword) SolveLinearReductions(constraint Candidate) (Candidat
 	if next.CountWildcards() == constraint.CountWildcards() {
 		return next, 1
 	}
-	result, depth := crossword.SolveLinearReductions(next)
+	result, depth := c.SolveLinearReductions(next)
 	return result, depth + 1
 }
