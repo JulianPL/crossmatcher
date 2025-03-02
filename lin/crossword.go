@@ -17,48 +17,6 @@ func MakeCrossword(rule string, alphabet collection.Alphabet) Crossword {
 	return Crossword{rule, alphabet}
 }
 
-// getBlockProbabilityAcc returns the accumulated probabilities of blocks of different sizes
-// TODO: At some point in the future, this should depend on the size of the crossword
-func getBlockProbabilityAcc() []float64 {
-	return []float64{0.0, 0.05, 0.35, 0.8, 1.0}
-}
-
-// getBlockLength gets a random size from the accumulated block lengths
-func getBlockLength() int {
-	blockProbabilityAcc := getBlockProbabilityAcc()
-	randomVal := rand.Float64()
-	for i, acc := range blockProbabilityAcc {
-		if randomVal < acc {
-			return i
-		}
-	}
-	return len(blockProbabilityAcc)
-}
-
-// SeparateIntoBlocks splits the rule consisting of only characters from the alphabet randomly into blocks
-// currently biased because the split starts from the front
-func (crossword Crossword) SeparateIntoBlocks() Crossword {
-	for _, char := range crossword.Rule {
-		if !crossword.Alphabet.Contains(char) {
-			return Crossword{}
-		}
-	}
-
-	newRule := ""
-	index := 0
-
-	for index < len(crossword.Rule) {
-		end := index + getBlockLength()
-		if end > len(crossword.Rule) {
-			end = len(crossword.Rule)
-		}
-		newRule += "(" + crossword.Rule[index:end] + ")+"
-		index = end
-	}
-
-	return MakeCrossword(newRule, crossword.Alphabet)
-}
-
 func (crossword Crossword) MergeRandomBlocks() Crossword {
 	rule := strings.Split(crossword.Rule, ")+(")
 	if len(rule) == 1 {
