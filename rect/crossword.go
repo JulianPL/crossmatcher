@@ -3,6 +3,7 @@ package rect
 import (
 	"crossmatcher/collection"
 	"crossmatcher/lin"
+	"fmt"
 )
 
 type Crossword struct {
@@ -16,8 +17,12 @@ func MakeCrossword(alphabet collection.Alphabet, horizontal []string, vertical [
 	return Crossword{horizontal, vertical, alphabet}
 }
 
+func (c Crossword) String() string {
+	return fmt.Sprintf("%v\n%v\n%v", c.Horizontal, c.Vertical, c.Alphabet)
+}
+
 func (c Crossword) hasUniqueSolution() bool {
-	candidate := MakeCandidateEmpty(c.Alphabet, len(c.Vertical), len(c.Horizontal))
+	candidate := MakeCandidateEmpty(c.Alphabet, len(c.Horizontal), len(c.Vertical))
 	solution, _ := c.SolveLinearReductions(candidate)
 	return c.CheckSolution(solution)
 }

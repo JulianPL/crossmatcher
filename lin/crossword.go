@@ -2,9 +2,7 @@ package lin
 
 import (
 	"crossmatcher/collection"
-	"math/rand"
 	"regexp"
-	"strings"
 )
 
 type Crossword struct {
@@ -15,20 +13,6 @@ type Crossword struct {
 // MakeCrossword makes a crossword from a given string and an underlying alphabet.
 func MakeCrossword(rule string, alphabet collection.Alphabet) Crossword {
 	return Crossword{rule, alphabet}
-}
-
-func (crossword Crossword) MergeRandomBlocks() Crossword {
-	rule := strings.Split(crossword.Rule, ")+(")
-	if len(rule) == 1 {
-		return MakeCrossword("", crossword.Alphabet)
-	}
-	sepIndex := 1
-	if len(rule) > 2 {
-		sepIndex = rand.Intn(len(rule)-2) + 1
-	}
-	left := strings.Join(rule[:sepIndex], ")+(")
-	right := strings.Join(rule[sepIndex:], ")+(")
-	return MakeCrossword(left+"|"+right, crossword.Alphabet)
 }
 
 // CheckSolution checks, whether a candidate without wildcards satisfies a crossword.

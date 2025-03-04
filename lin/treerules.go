@@ -1,7 +1,9 @@
 package lin
 
 import (
+	"crossmatcher/collection"
 	"math/rand"
+	"slices"
 )
 
 type RegexNodeType int
@@ -81,6 +83,25 @@ func (node RegexNode) SimplifyAlternations() RegexNode {
 	return newNode
 }
 
+func (node RegexNode) RandomizeAlternations() RegexNode {
+	if node.Type == Literal {
+		return RegexNode{Type: Literal, Value: node.Value}
+	}
+	newNode := RegexNode{Type: node.Type, Value: node.Value}
+	if node.Type == Alternation {
+		for _, child := range node.Children {
+			randomizedChild := child.RandomizeAlternations()
+			index := rand.Intn(len(newNode.Children) + 1)
+			newNode.Children = slices.Insert(newNode.Children, index, randomizedChild)
+		}
+	} else {
+		for _, child := range node.Children {
+			newNode.Children = append(newNode.Children, child.RandomizeAlternations())
+		}
+	}
+	return newNode
+}
+
 // MakeRegexNode makes a regexNode corresponding to a concatenation of alphabet characters
 func MakeRegexNode(value string) RegexNode {
 	children := make([]RegexNode, len(value))
@@ -147,16 +168,52 @@ func (node RegexNode) MergeRandomBlocks() RegexNode {
 		return node
 	}
 	ret := node.DeepCopy()
-	leftIndex := 0
-	if len(ret.Children) > 2 {
-		leftIndex = rand.Intn(len(ret.Children) - 2)
-	}
+	leftIndex := rand.Intn(len(ret.Children) - 1)
 	rightIndex := leftIndex + 1
 	leftAlternation := &ret.Children[leftIndex].Children[0].Children
 	rightAlternation := &ret.Children[rightIndex].Children[0].Children
 	*leftAlternation = append(*leftAlternation, *rightAlternation...)
 
 	ret.Children = append(ret.Children[:rightIndex], ret.Children[rightIndex+1:]...)
+
+	return ret
+}
+
+func (node RegexNode) ExtendRandomAlternationElement(alphabet collection.Alphabet) RegexNode {
+	ret := node.DeepCopy()
+	alphabetRunes := []rune(alphabet.String())
+
+	groupIndex := rand.Intn(len(ret.Children))
+	elementIndex := rand.Intn(len(ret.Children[groupIndex].Children[0].Children))
+	alternationElement := ret.Children[groupIndex].Children[0].Children[elementIndex].DeepCopy()
+
+	char := alphabetRunes[rand.Intn(len(alphabetRunes))]
+	leftIndex := rand.Intn(len(alternationElement.Children) + 1)
+
+	charNode := RegexNode{Type: Literal, Value: string(char)}
+	alternationElement.Children = slices.Insert(alternationElement.Children, leftIndex, charNode)
+	ret.Children[groupIndex].Children[0].Children = append(ret.Children[groupIndex].Children[0].Children, alternationElement)
+
+	return ret
+}
+
+func (node RegexNode) ShortenRandomAlternationElement() RegexNode {
+	ret := node.DeepCopy()
+
+	groupIndex := rand.Intn(len(ret.Children))
+	elementIndex := rand.Intn(len(ret.Children[groupIndex].Children[0].Children))
+	alternationElement := ret.Children[groupIndex].Children[0].Children[elementIndex].DeepCopy()
+
+	// shortening single character makes no sense
+	// shortening double character probably makes no fun
+	if len(alternationElement.Children) <= 2 {
+		return node
+	}
+
+	leftIndex := rand.Intn(len(alternationElement.Children))
+
+	alternationElement.Children = slices.Delete(alternationElement.Children, leftIndex, leftIndex+1)
+	ret.Children[groupIndex].Children[0].Children = append(ret.Children[groupIndex].Children[0].Children, alternationElement)
 
 	return ret
 }

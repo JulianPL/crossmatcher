@@ -469,6 +469,10 @@ func Window() {
 	// Set a reasonable starting size
 	window.Resize(fyne.NewSize(400, 300))
 
+	example := "01\n\n(011|10|1)+\n(110|10)+(110)+\n(00|0|100)+\n(01)+(11|101)+\n(101|0|01)+\n(1|00|101)+\n\n(1110|11100|11)+\n(01|0)+(100|10)+\n(111|0000|11)+\n(1|0100|010|11)+\n(11011|111|1101|11010|10)+\n(0|10|010)+\n\n......\n......\n......\n......\n......\n......"
+
+	linView.onImport(example)
+
 	// Show and run the window
 	window.ShowAndRun()
 }

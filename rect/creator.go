@@ -6,6 +6,14 @@ import (
 	"math/rand"
 )
 
+type TransformationType int
+
+const (
+	Merge int = iota
+	Extend
+	Shorten
+)
+
 type CrosswordTree struct {
 	Horizontal []lin.RegexNode
 	Vertical   []lin.RegexNode
@@ -23,11 +31,13 @@ func MakeRandomCrossword(alphabet collection.Alphabet, height, width int) Crossw
 		vertical[i] = lin.MakeRegexNode(rule)
 	}
 	ret := CrosswordTree{Horizontal: horizontal, Vertical: vertical, Alphabet: alphabet}
-	ret = ret.SeparateRulesIntoBlocks()
+	ret = ret.initialSeparationTransformations()
 
-	for range 100 {
-		ret.transformSingleRule()
+	for range 5 * (height + width) {
+		ret = ret.transformSingleRule(alphabet)
 	}
+
+	ret = ret.finalSeparationTransformations()
 
 	return ret.ToCrossword()
 }
@@ -94,15 +104,51 @@ func (c CrosswordTree) getRandomRuleRef() *lin.RegexNode {
 	}
 }
 
-func (c CrosswordTree) transformSingleRule() CrosswordTree {
+func (c CrosswordTree) transformSingleRule(alphabet collection.Alphabet) CrosswordTree {
 	ruleRef := c.getRandomRuleRef()
-	//Todo randomly select different transformation methods
-	return c.MergeBlocks(ruleRef)
+	rule := getTransformationNumber()
+	switch rule {
+	case Merge:
+		return c.MergeBlocks(ruleRef)
+	case Extend:
+		return c.ExtendAlternationElement(ruleRef, alphabet)
+	case Shorten:
+		return c.ShortenAlternationElement(ruleRef)
+	default:
+		return c
+	}
+}
+
+func getTransformationProbabilityAcc() []float64 {
+	return []float64{0.8, 0.90}
+}
+
+func getTransformationNumber() int {
+	blockProbabilityAcc := getTransformationProbabilityAcc()
+	randomVal := rand.Float64()
+	for i, acc := range blockProbabilityAcc {
+		if randomVal < acc {
+			return i
+		}
+	}
+	return len(blockProbabilityAcc)
 }
 
 func (c CrosswordTree) MergeBlocks(ruleRef *lin.RegexNode) CrosswordTree {
 	rule := *ruleRef
 	rule = rule.MergeRandomBlocks()
+	return c.tryRuleChange(ruleRef, rule)
+}
+
+func (c CrosswordTree) ExtendAlternationElement(ruleRef *lin.RegexNode, alphabet collection.Alphabet) CrosswordTree {
+	rule := *ruleRef
+	rule = rule.ExtendRandomAlternationElement(alphabet)
+	return c.tryRuleChange(ruleRef, rule)
+}
+
+func (c CrosswordTree) ShortenAlternationElement(ruleRef *lin.RegexNode) CrosswordTree {
+	rule := *ruleRef
+	rule = rule.ShortenRandomAlternationElement()
 	return c.tryRuleChange(ruleRef, rule)
 }
 
@@ -127,9 +173,24 @@ func applyInitialSeparationTransformations(rules []lin.RegexNode) []lin.RegexNod
 	return newRules
 }
 
-func (c CrosswordTree) SeparateRulesIntoBlocks() CrosswordTree {
+func applyFinalSeparationTransformations(rules []lin.RegexNode) []lin.RegexNode {
+	newRules := make([]lin.RegexNode, len(rules))
+	for i, rule := range rules {
+		newRules[i] = rule.SimplifyAlternations().RandomizeAlternations()
+	}
+	return newRules
+}
+
+func (c CrosswordTree) initialSeparationTransformations() CrosswordTree {
 	ret := c.DeepCopy()
 	ret.Horizontal = applyInitialSeparationTransformations(ret.Horizontal)
 	ret.Vertical = applyInitialSeparationTransformations(ret.Vertical)
+	return ret
+}
+
+func (c CrosswordTree) finalSeparationTransformations() CrosswordTree {
+	ret := c.DeepCopy()
+	ret.Horizontal = applyFinalSeparationTransformations(ret.Horizontal)
+	ret.Vertical = applyFinalSeparationTransformations(ret.Vertical)
 	return ret
 }
