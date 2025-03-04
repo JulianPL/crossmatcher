@@ -187,6 +187,12 @@ func (node RegexNode) ExtendRandomAlternationElement(alphabet collection.Alphabe
 	elementIndex := rand.Intn(len(ret.Children[groupIndex].Children[0].Children))
 	alternationElement := ret.Children[groupIndex].Children[0].Children[elementIndex].DeepCopy()
 
+	// shortening single character makes no sense
+	// shortening double character probably makes no fun
+	if len(alternationElement.Children) == len(getBlockProbabilityAcc()) {
+		return node
+	}
+
 	char := alphabetRunes[rand.Intn(len(alphabetRunes))]
 	leftIndex := rand.Intn(len(alternationElement.Children) + 1)
 
