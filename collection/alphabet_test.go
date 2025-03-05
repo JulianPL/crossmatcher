@@ -1,14 +1,16 @@
 package collection
 
 import (
+	"strings"
 	"testing"
 )
 
 func TestAlphabet_Make(t *testing.T) {
 	alphabet := MakeAlphabet("t€st")
-	alphabet.Len()
-	if alphabet.Len() != 3 {
-		t.Errorf("alphabet.Len given by \"t€st\" expected %d, got %d.", 3, alphabet.Len())
+	actual := alphabet.Len()
+	expected := 3
+	if actual != expected {
+		t.Errorf("alphabet.Len given by \"t€st\" expected %d, got %d.", expected, actual)
 	}
 	if !alphabet.Contains('t') {
 		t.Errorf("alphabet given by \"t€st\" expected to contain 't'.")
@@ -18,6 +20,19 @@ func TestAlphabet_Make(t *testing.T) {
 	}
 	if alphabet.Contains('T') {
 		t.Errorf("alphabet given by \"t€st\" expected not to contain 'T'.")
+	}
+}
+
+func TestAlphabet_String(t *testing.T) {
+	alphabetString := MakeAlphabet("abd", 'b').String()
+	if !strings.Contains(alphabetString, "a") {
+		t.Errorf("alphabet given by \"abd\" with wildcard 'b' expected to contain 'a'.")
+	}
+	if strings.Contains(alphabetString, "b") {
+		t.Errorf("alphabet given by \"abd\" with wildcard 'b' expected not to contain 'b'.")
+	}
+	if strings.Contains(alphabetString, "c") {
+		t.Errorf("alphabet given by \"abd\" with wildcard 'b' expected not to contain 'c'.")
 	}
 }
 
