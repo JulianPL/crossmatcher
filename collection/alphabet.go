@@ -7,6 +7,8 @@ type Alphabet struct {
 	char   map[int]rune
 }
 
+const WildcardNumber = -1
+
 // MakeAlphabet makes an alphabet that contains all non-wildcard characters from a given string.
 func MakeAlphabet(characters string, wildcards ...rune) Alphabet {
 	alphabet := Alphabet{make(map[rune]int), make(map[int]rune)}
@@ -18,59 +20,59 @@ func MakeAlphabet(characters string, wildcards ...rune) Alphabet {
 	return alphabet
 }
 
-func (alphabet Alphabet) String() string {
+func (a Alphabet) String() string {
 	charString := ""
-	for _, char := range alphabet.char {
+	for _, char := range a.char {
 		charString += string(char)
 	}
 	return charString
 }
 
-func (alphabet Alphabet) Copy() Alphabet {
+func (a Alphabet) Copy() Alphabet {
 	newAlphabet := Alphabet{make(map[rune]int), make(map[int]rune)}
-	for key, value := range alphabet.number {
+	for key, value := range a.number {
 		newAlphabet.number[key] = value
 	}
-	for key, value := range alphabet.char {
+	for key, value := range a.char {
 		newAlphabet.char[key] = value
 	}
 	return newAlphabet
 }
 
 // Merge returns an alphabet with all characters from alphabet and from insert.
-func (alphabet Alphabet) Merge(insert Alphabet) Alphabet {
-	newAlphabet := alphabet.Copy()
+func (a Alphabet) Merge(insert Alphabet) Alphabet {
+	newAlphabet := a.Copy()
 	for _, char := range insert.char {
 		newAlphabet.Insert(char)
 	}
 	return newAlphabet
 }
 
-func (alphabet Alphabet) Insert(char rune) {
-	if alphabet.Contains(char) {
+func (a Alphabet) Insert(char rune) {
+	if a.Contains(char) {
 		return
 	}
-	num := alphabet.Len()
+	num := a.Len()
 
-	alphabet.number[char] = num
-	alphabet.char[num] = char
+	a.number[char] = num
+	a.char[num] = char
 }
 
-func (alphabet Alphabet) Contains(char rune) bool {
-	_, ok := alphabet.number[char]
+func (a Alphabet) Contains(char rune) bool {
+	_, ok := a.number[char]
 	return ok
 }
 
-func (alphabet Alphabet) Len() int {
-	return len(alphabet.number)
+func (a Alphabet) Len() int {
+	return len(a.number)
 }
 
-func (alphabet Alphabet) Char(num int) (rune, bool) {
-	char, ok := alphabet.char[num]
+func (a Alphabet) Char(num int) (rune, bool) {
+	char, ok := a.char[num]
 	return char, ok
 }
 
-func (alphabet Alphabet) Number(char rune) (int, bool) {
-	num, ok := alphabet.number[char]
+func (a Alphabet) Number(char rune) (int, bool) {
+	num, ok := a.number[char]
 	return num, ok
 }

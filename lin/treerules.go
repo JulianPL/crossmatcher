@@ -21,6 +21,7 @@ type RegexNode struct {
 	Children []RegexNode
 }
 
+// String returns a representation of the regex node.
 func (node RegexNode) String() string {
 	switch node.Type {
 	case Literal:
@@ -47,6 +48,7 @@ func (node RegexNode) String() string {
 	}
 }
 
+// DeepCopy creates a copy of a regex node which can be altered without side effects to the original node
 func (node RegexNode) DeepCopy() RegexNode {
 	if node.Type == Literal {
 		return RegexNode{Type: Literal, Value: node.Value}
@@ -58,7 +60,7 @@ func (node RegexNode) DeepCopy() RegexNode {
 	return newNode
 }
 
-// SimplifyAlternations make a deep copy without string-duplicates in Alteration nodes
+// SimplifyAlternations creates a deep copy without string-duplicates in Alteration nodes
 func (node RegexNode) SimplifyAlternations() RegexNode {
 	if node.Type == Literal {
 		return RegexNode{Type: Literal, Value: node.Value}
@@ -83,6 +85,7 @@ func (node RegexNode) SimplifyAlternations() RegexNode {
 	return newNode
 }
 
+// RandomizeAlternations creates a deep copy in which the children of alternation nodes are in a random order
 func (node RegexNode) RandomizeAlternations() RegexNode {
 	if node.Type == Literal {
 		return RegexNode{Type: Literal, Value: node.Value}
@@ -142,7 +145,7 @@ func (node RegexNode) SeparateIntoBlocks() RegexNode {
 	return ret
 }
 
-// WithAlternationSubgroups replaces each child with a repetition of itself
+// WithAlternationSubgroups replaces each child with a alternation of itself
 func (node RegexNode) WithAlternationSubgroups() RegexNode {
 	ret := node.DeepCopy()
 	for i, child := range ret.Children {
@@ -162,7 +165,7 @@ func (node RegexNode) WithRepetitionSubgroups() RegexNode {
 	return ret
 }
 
-// MergeRandomBlocks Merges the Alternation-Grandchildren of Repetition-Children
+// MergeRandomBlocks merges the Alternation-Grandchildren of Repetition-Children
 func (node RegexNode) MergeRandomBlocks() RegexNode {
 	if len(node.Children) <= 1 {
 		return node
@@ -179,6 +182,9 @@ func (node RegexNode) MergeRandomBlocks() RegexNode {
 	return ret
 }
 
+// ExtendRandomAlternationElement extends a random Alternation-Grandchildren of Repetition-Children
+// expects the Grandchildren to have Concatenation-Children and Literal-Grandchildren
+// for example (a)+->(a|ab)+ or (a|ba)+
 func (node RegexNode) ExtendRandomAlternationElement(alphabet collection.Alphabet) RegexNode {
 	ret := node.DeepCopy()
 	alphabetRunes := []rune(alphabet.String())
@@ -187,9 +193,8 @@ func (node RegexNode) ExtendRandomAlternationElement(alphabet collection.Alphabe
 	elementIndex := rand.Intn(len(ret.Children[groupIndex].Children[0].Children))
 	alternationElement := ret.Children[groupIndex].Children[0].Children[elementIndex].DeepCopy()
 
-	// shortening single character makes no sense
-	// shortening double character probably makes no fun
-	if len(alternationElement.Children) == len(getBlockProbabilityAcc()) {
+	// extending blocks with at least maximal length makes no sense
+	if len(alternationElement.Children) >= len(getBlockProbabilityAcc()) {
 		return node
 	}
 
@@ -203,6 +208,9 @@ func (node RegexNode) ExtendRandomAlternationElement(alphabet collection.Alphabe
 	return ret
 }
 
+// ShortenRandomAlternationElement shortens a random Alternation-Grandchildren of Repetition-Children
+// expects the Grandchildren to have Concatenation-Children and Literal-Grandchildren
+// for example (aab)+->(aab|aa)+ or (aab)+->(aab|ab)+
 func (node RegexNode) ShortenRandomAlternationElement() RegexNode {
 	ret := node.DeepCopy()
 

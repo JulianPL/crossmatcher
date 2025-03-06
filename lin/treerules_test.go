@@ -1,6 +1,7 @@
 package lin
 
 import (
+	"crossmatcher/collection"
 	"strings"
 	"testing"
 )
@@ -91,5 +92,75 @@ func TestRuleTree_SimplifyAlternations(t *testing.T) {
 	}
 	if len(simplified.Children[0].Children[0].Children) > 6 {
 		t.Errorf("SimplifyAlternations is incorrect. Expected no duplicates, actual:%s", simplified.String())
+	}
+}
+
+func TestRuleTree_ExtendRandomAlternationElement(t *testing.T) {
+	group := MakeRegexNode("a")
+	alternation := RegexNode{Type: Alternation, Children: []RegexNode{group}}
+	repetition := RegexNode{Type: Repetition, Value: "+", Children: []RegexNode{alternation}}
+	root := &RegexNode{Type: Concatenation, Children: []RegexNode{repetition}}
+	actual := root.ExtendRandomAlternationElement(collection.MakeAlphabet("a")).String()
+	expected := "(a|aa)+"
+	if actual != expected {
+		t.Errorf("ExtendRandomAlternationElement is incorrect. Expected:%s, actual:%s", expected, actual)
+	}
+	group = MakeRegexNode("aaaaaaaaaa")
+	alternation = RegexNode{Type: Alternation, Children: []RegexNode{group}}
+	repetition = RegexNode{Type: Repetition, Value: "+", Children: []RegexNode{alternation}}
+	root = &RegexNode{Type: Concatenation, Children: []RegexNode{repetition}}
+	actual = root.ExtendRandomAlternationElement(collection.MakeAlphabet("a")).String()
+	expected = "(aaaaaaaaaa)+"
+	if actual != expected {
+		t.Errorf("ExtendRandomAlternationElement is incorrect. Expected:%s, actual:%s", expected, actual)
+	}
+}
+
+func TestRuleTree_ShortenRandomAlternationElement(t *testing.T) {
+	group := MakeRegexNode("a")
+	alternation := RegexNode{Type: Alternation, Children: []RegexNode{group}}
+	repetition := RegexNode{Type: Repetition, Value: "+", Children: []RegexNode{alternation}}
+	root := &RegexNode{Type: Concatenation, Children: []RegexNode{repetition}}
+	actual := root.ShortenRandomAlternationElement().String()
+	expected := "(a)+"
+	if actual != expected {
+		t.Errorf("ShortenRandomAlternationElement is incorrect. Expected:%s, actual:%s", expected, actual)
+	}
+	group = MakeRegexNode("aa")
+	alternation = RegexNode{Type: Alternation, Children: []RegexNode{group}}
+	repetition = RegexNode{Type: Repetition, Value: "+", Children: []RegexNode{alternation}}
+	root = &RegexNode{Type: Concatenation, Children: []RegexNode{repetition}}
+	actual = root.ShortenRandomAlternationElement().String()
+	expected = "(aa)+"
+	if actual != expected {
+		t.Errorf("ShortenRandomAlternationElement is incorrect. Expected:%s, actual:%s", expected, actual)
+	}
+	group = MakeRegexNode("aaa")
+	alternation = RegexNode{Type: Alternation, Children: []RegexNode{group}}
+	repetition = RegexNode{Type: Repetition, Value: "+", Children: []RegexNode{alternation}}
+	root = &RegexNode{Type: Concatenation, Children: []RegexNode{repetition}}
+	actual = root.ShortenRandomAlternationElement().String()
+	expected = "(aaa|aa)+"
+	if actual != expected {
+		t.Errorf("ShortenRandomAlternationElement is incorrect. Expected:%s, actual:%s", expected, actual)
+	}
+}
+
+func TestRuleTree_RandomizeAlternations(t *testing.T) {
+	base := "RegularExpression"
+	grouped := MakeRegexNode(base).SeparateIntoBlocks().WithAlternationSubgroups().WithRepetitionSubgroups()
+	for range 15 {
+		grouped = grouped.MergeRandomBlocks()
+	}
+	randomized := grouped.RandomizeAlternations()
+	randomizedString := randomized.String()
+	groupedString := grouped.String()
+	if randomizedString == groupedString {
+		t.Errorf("RandomizeAlternations is (probably) incorrect. Original = Randomized:%s", groupedString)
+	}
+	randomizedSize := len(randomizedString)
+	groupedSize := len(groupedString)
+	if randomizedSize != groupedSize {
+		t.Errorf("RandomizeAlternations is incorrect. Expected length:%d, actual:%d", groupedSize, randomizedSize)
 	}
 }

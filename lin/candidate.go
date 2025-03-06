@@ -18,9 +18,8 @@ func MakeCandidateFirst(alphabet collection.Alphabet, size int) (Candidate, bool
 	if alphabet.Len() == 0 {
 		return Candidate{}, false
 	}
-
 	content := make(Content, size)
-	for i := 0; i < size; i++ {
+	for i := range content {
 		content[i] = 0
 	}
 	return Candidate{content, alphabet}, true
@@ -29,8 +28,8 @@ func MakeCandidateFirst(alphabet collection.Alphabet, size int) (Candidate, bool
 // MakeCandidateEmpty makes a candidate consisting of only wildcards.
 func MakeCandidateEmpty(alphabet collection.Alphabet, size int) Candidate {
 	content := make(Content, size)
-	for i := 0; i < size; i++ {
-		content[i] = -1
+	for i := range content {
+		content[i] = collection.WildcardNumber
 	}
 	return Candidate{content, alphabet}
 }
@@ -46,8 +45,7 @@ func MakeCandidate(row string, wildcards ...rune) Candidate {
 // Fails if non-wildcard numbers which are not in the alphabet occur.
 func MakeCandidateManual(content Content, alphabet collection.Alphabet) (Candidate, bool) {
 	for _, num := range content {
-		_, ok := alphabet.Char(num)
-		if (!ok) && (num != -1) {
+		if _, ok := alphabet.Char(num); (!ok) && (num != collection.WildcardNumber) {
 			return Candidate{}, false
 		}
 	}
@@ -61,8 +59,7 @@ func MakeContent(row string, alphabet collection.Alphabet, wildcards ...rune) (C
 	var content Content
 	for _, char := range row {
 		if slices.Contains(wildcards, char) {
-			num := -1
-			content = append(content, num)
+			content = append(content, collection.WildcardNumber)
 		} else {
 			num, ok := alphabet.Number(char)
 			if !ok {
@@ -74,8 +71,8 @@ func MakeContent(row string, alphabet collection.Alphabet, wildcards ...rune) (C
 	return content, true
 }
 
-// String returns the candidate.
-// Wildcards are presented by the passed rune (default = '.').
+// String returns a representation of the candidate.
+// The wildcard is presented by the first passed rune (default = '.').
 func (c Candidate) String(wildcard ...rune) string {
 	wildRune := '.'
 	if wildcard != nil {
@@ -84,7 +81,7 @@ func (c Candidate) String(wildcard ...rune) string {
 
 	rowString := ""
 	for _, num := range c.Content {
-		if num == -1 {
+		if num == collection.WildcardNumber {
 			rowString += string(wildRune)
 		} else {
 			char, _ := c.Alphabet.Char(num)
@@ -104,7 +101,7 @@ func (c Candidate) Len() int {
 func (c Candidate) CountWildcards() int {
 	count := 0
 	for _, char := range c.Content {
-		if char == -1 {
+		if char == collection.WildcardNumber {
 			count++
 		}
 	}
@@ -117,7 +114,7 @@ func (c Candidate) CountWildcards() int {
 func (c Candidate) IncrementCandidate() (Candidate, bool) {
 	success := false
 	increment := c.Copy()
-	for i := 0; i < len(c.Content); i++ {
+	for i := range c.Content {
 		if increment.Content[i] < increment.Alphabet.Len()-1 {
 			increment.Content[i] += 1
 			success = true
@@ -155,12 +152,12 @@ func (c Candidate) Merge(cFill Candidate) (Candidate, bool) {
 
 	for _, num := range c.Content {
 		var newNum int
-		if num != -1 {
+		if num != collection.WildcardNumber {
 			char, _ := c.Alphabet.Char(num)
 			newNum, _ = alphabetMerge.Number(char)
 		} else {
-			if cFill.Content[currentFill] == -1 {
-				newNum = -1
+			if cFill.Content[currentFill] == collection.WildcardNumber {
+				newNum = collection.WildcardNumber
 			} else {
 				char, _ := cFill.Alphabet.Char(cFill.Content[currentFill])
 				newNum, _ = alphabetMerge.Number(char)
@@ -175,6 +172,8 @@ func (c Candidate) Merge(cFill Candidate) (Candidate, bool) {
 }
 
 // GreatestCommonPattern finds the largest subset of equal non-wildcards.
+// if c is empty returns a copy of cFill
+// otherwise fails if the lengths of c and cFill are unequal
 func (c Candidate) GreatestCommonPattern(cFill Candidate) (Candidate, bool) {
 	if c.Len() == 0 {
 		return cFill.Copy(), true
@@ -187,8 +186,8 @@ func (c Candidate) GreatestCommonPattern(cFill Candidate) (Candidate, bool) {
 	for i := range c.Content {
 		num1 := c.Content[i]
 		num2 := cFill.Content[i]
-		if (num1 == -1) || (num2 == -1) {
-			content = append(content, -1)
+		if (num1 == collection.WildcardNumber) || (num2 == collection.WildcardNumber) {
+			content = append(content, collection.WildcardNumber)
 			continue
 		}
 		char1, _ := c.Alphabet.Char(num1)
@@ -197,7 +196,7 @@ func (c Candidate) GreatestCommonPattern(cFill Candidate) (Candidate, bool) {
 			num, _ := alphabet.Number(char1)
 			content = append(content, num)
 		} else {
-			content = append(content, -1)
+			content = append(content, collection.WildcardNumber)
 		}
 	}
 	return Candidate{content, alphabet}, true
