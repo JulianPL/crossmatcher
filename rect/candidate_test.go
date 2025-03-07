@@ -58,6 +58,15 @@ func TestCandidate_MakeCandidate(t *testing.T) {
 	}
 }
 
+func TestCandidate_CountWildcards(t *testing.T) {
+	candidate := MakeCandidate([]string{"aa..", "b.b.", "aba."}, '.')
+	expected := 5
+	actual := candidate.CountWildcards()
+	if expected != actual {
+		t.Errorf("MakeCandidate is incorrect expected count %d, actual %d", expected, actual)
+	}
+}
+
 func TestCandidate_IncrementCandidate(t *testing.T) {
 	alphabet := collection.MakeAlphabet("0€1")
 	candidate, _ := MakeCandidateFirst(alphabet, 2, 3)
@@ -69,6 +78,42 @@ func TestCandidate_IncrementCandidate(t *testing.T) {
 	}
 	if count != 729 {
 		t.Errorf("Incorrect number of distinct candidates: expected 729, got %d", count)
+	}
+}
+
+func TestCandidate_Copy(t *testing.T) {
+	alphabet := collection.MakeAlphabet("0€1")
+	candidate := MakeCandidate([]string{"0€..", "€.1.", "0€1."}, '.')
+	candidateCopy := candidate.Copy()
+	if candidateCopy.String() != candidate.String() {
+		t.Errorf("Copy is incorrect expected %s, actual %s", candidate.String(), candidateCopy.String())
+	}
+	candidateCopy.Content[2][2], _ = alphabet.Number('€')
+	if candidateCopy.String() == candidate.String() {
+		t.Errorf("Copy is incorrect expected one change in %s", candidate.String())
+	}
+}
+
+func TestCandidate_Merge(t *testing.T) {
+	candidate := MakeCandidate([]string{"0€..", "€.1.", "0€1."}, '.')
+	cFill := lin.MakeCandidate("&€.0€1", '.')
+	_, ok := candidate.Merge(cFill)
+	if ok {
+		t.Errorf("Merge is incorrect. Expect a fail at too long cFill")
+	}
+	cFill = lin.MakeCandidate("&€.0", '.')
+	_, ok = candidate.Merge(cFill)
+	if ok {
+		t.Errorf("Merge is incorrect. Expect a fail at too short cFill")
+	}
+	cFill = lin.MakeCandidate("&€.0€", '.')
+	merged, ok := candidate.Merge(cFill)
+	if !ok {
+		t.Errorf("Merge is incorrect. Expect success on correctly sized cFill")
+	}
+	expected := MakeCandidate([]string{"0€&€", "€.10", "0€1€"}, '.')
+	if merged.String() != expected.String() {
+		t.Errorf("Merge is incorrect. Expected %s, actual %s", expected.String(), merged.String())
 	}
 }
 

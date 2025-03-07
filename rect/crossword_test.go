@@ -5,6 +5,42 @@ import (
 	"testing"
 )
 
+func TestCrossword_MakeCrossword(t *testing.T) {
+	horizontal := []string{"aa|aa", "aa|aa"}
+	vertical := []string{"a.", ".a"}
+	alphabet := collection.MakeAlphabet("a")
+	crossword := MakeCrossword(alphabet, horizontal, vertical)
+	expected := "[aa|aa aa|aa]\n[a. .a]\na"
+	actual := crossword.String()
+	if actual != expected {
+		t.Errorf("MakeCrossword is wrong. Expected %s, got %s", expected, actual)
+	}
+}
+
+func TestCrossword_HasUniqueSolution(t *testing.T) {
+	horizontal := []string{"ab|ba", "aa|bb"}
+	vertical := []string{"b.", ".b"}
+	alphabet := collection.MakeAlphabet("ab")
+	crossword := MakeCrossword(alphabet, horizontal, vertical)
+	if !crossword.HasUniqueSolution() {
+		t.Errorf("HasUniqueSolution failed. Expect a solution for %s", crossword)
+	}
+	horizontal = []string{"ab|ba", "aa|bb"}
+	vertical = []string{"b.", ".."}
+	alphabet = collection.MakeAlphabet("ab")
+	crossword = MakeCrossword(alphabet, horizontal, vertical)
+	if crossword.HasUniqueSolution() {
+		t.Errorf("HasUniqueSolution failed. Expect no solution for %s", crossword)
+	}
+	horizontal = []string{"ab|ba", "aa|bb"}
+	vertical = []string{"bb", "bb"}
+	alphabet = collection.MakeAlphabet("ab")
+	crossword = MakeCrossword(alphabet, horizontal, vertical)
+	if crossword.HasUniqueSolution() {
+		t.Errorf("HasUniqueSolution failed. Expect no solution for %s", crossword)
+	}
+}
+
 func TestCrossword_GetRow(t *testing.T) {
 	horizontal := []string{"ab|ba", "aa|bb"}
 	vertical := []string{"ba", ".."}
@@ -93,17 +129,6 @@ func TestCrossword_SolveBruteforce(t *testing.T) {
 	if row.String() != "ba" {
 		t.Errorf("SolveBruteforce did not find the correct first row. Expected %s, got %s", "ba", row.String())
 	}
-	/* Performance Test: about 250,000 candidates in about 5 seconds
-	horizontal = []string{".*", ".*", "a.*"}
-	vertical = []string{".*", ".*", ".*"}
-	alphabet = collection.MakeAlphabet("abcd")
-	crossword = MakeCrossword(alphabet, horizontal, vertical)
-	constraint = MakeCandidate([]string{"...", "...", "..."}, '.')
-	solution, _ = crossword.SolveBruteforce(constraint)
-	row, _ = solution.GetRow(2)
-	if row.String() != "abb" {
-		t.Errorf("SolveBruteforce did not find the correct first row. Expected %s, got %s", "a..", row.String())
-	} */
 }
 
 func TestCrossword_SolveLinearReductions(t *testing.T) {
@@ -124,6 +149,26 @@ func TestCrossword_SolveLinearReductions(t *testing.T) {
 	constraint = MakeCandidateEmpty(alphabet, 6, 6)
 	solution, _ = crossword.SolveLinearReductions(constraint)
 	expected = "011100\n100110\n001000\n011110\n011010\n001110"
+	if solution.String() != expected {
+		t.Errorf("SolveLinearReductions did not find the solution. Expected %s, got %s", expected, solution.String())
+	}
+	horizontal = []string{"ab|ba", "aa|bb"}
+	vertical = []string{"bb", "bb"}
+	alphabet = collection.MakeAlphabet("ab")
+	crossword = MakeCrossword(alphabet, horizontal, vertical)
+	constraint = MakeCandidateEmpty(alphabet, 2, 2)
+	solution, _ = crossword.SolveLinearReductions(constraint)
+	expected = ""
+	if solution.String() != expected {
+		t.Errorf("SolveLinearReductions did not find the solution. Expected %s, got %s", expected, solution.String())
+	}
+	horizontal = []string{"bb", "bb"}
+	vertical = []string{"ab|ba", "aa|bb"}
+	alphabet = collection.MakeAlphabet("ab")
+	crossword = MakeCrossword(alphabet, horizontal, vertical)
+	constraint = MakeCandidateEmpty(alphabet, 2, 2)
+	solution, _ = crossword.SolveLinearReductions(constraint)
+	expected = ""
 	if solution.String() != expected {
 		t.Errorf("SolveLinearReductions did not find the solution. Expected %s, got %s", expected, solution.String())
 	}

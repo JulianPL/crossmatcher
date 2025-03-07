@@ -17,16 +17,23 @@ func MakeCrossword(alphabet collection.Alphabet, horizontal []string, vertical [
 	return Crossword{horizontal, vertical, alphabet}
 }
 
+// String returns a representation of the candidate.
 func (c Crossword) String() string {
-	return fmt.Sprintf("%v\n%v\n%v", c.Horizontal, c.Vertical, c.Alphabet)
+	return fmt.Sprintf("%s\n%s\n%s", c.Horizontal, c.Vertical, c.Alphabet)
 }
 
-func (c Crossword) hasUniqueSolution() bool {
+// HasUniqueSolution returns true if and only if the crossword has exactly one solution
+func (c Crossword) HasUniqueSolution() bool {
 	candidate := MakeCandidateEmpty(c.Alphabet, len(c.Horizontal), len(c.Vertical))
 	solution, _ := c.SolveLinearReductions(candidate)
+	if len(solution.Content) == 0 {
+		return false
+	}
 	return c.CheckSolution(solution)
 }
 
+// GetRow restrict a candidate to the given row (which leaves a linear crossword)
+// Fails if the rowNumber is too large
 func (c Crossword) GetRow(rowNumber int) (lin.Crossword, bool) {
 	if len(c.Horizontal) <= rowNumber {
 		return lin.MakeCrossword("", collection.MakeAlphabet("")), false
@@ -35,6 +42,8 @@ func (c Crossword) GetRow(rowNumber int) (lin.Crossword, bool) {
 	return row, true
 }
 
+// GetCol restrict a candidate to the given col (which leaves a linear candidate)
+// Fails if the colNumber is too large
 func (c Crossword) GetCol(colNumber int) (lin.Crossword, bool) {
 	if len(c.Vertical) <= colNumber {
 		return lin.MakeCrossword("", collection.MakeAlphabet("")), false
@@ -67,7 +76,7 @@ func (c Crossword) CheckSolution(candidate Candidate) bool {
 	return true
 }
 
-// SolveBruteforce checks all candidates that fill the wildcards given by the constraint.
+// SolveBruteforce counts all solutions of the crossword given by the constraint and returns the last one.
 func (c Crossword) SolveBruteforce(constraint Candidate) (Candidate, int) {
 	candidateFill, _ := lin.MakeCandidateFirst(c.Alphabet, constraint.CountWildcards())
 
@@ -85,6 +94,9 @@ func (c Crossword) SolveBruteforce(constraint Candidate) (Candidate, int) {
 	return solution, solutionNum
 }
 
+// SolveLinearReductions returns a partial solution to the crossword
+// using the natural embedding of linear crosswords in rectangular crosswords.
+// For future "interestingness" heuristics, this function also returns its recursion depth
 func (c Crossword) SolveLinearReductions(constraint Candidate) (Candidate, int) {
 	next := constraint.Copy()
 	for rowNumber := range c.Horizontal {

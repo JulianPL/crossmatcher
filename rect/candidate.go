@@ -36,7 +36,7 @@ func MakeCandidateEmpty(alphabet collection.Alphabet, verticalSize int, horizont
 	for i := range content {
 		content[i] = make(lin.Content, horizontalSize)
 		for j := range content[i] {
-			content[i][j] = -1
+			content[i][j] = collection.WildcardNumber
 		}
 	}
 	return Candidate{content, alphabet}
@@ -53,8 +53,8 @@ func MakeCandidate(rows []string, wildcards ...rune) Candidate {
 	return Candidate{content, alphabet}
 }
 
-// String returns the candidate.
-// Wildcards are presented by the passed rune (default = '.').
+// String returns a representation of the candidate.
+// The wildcard is presented by the first passed rune (default = '.').
 func (c Candidate) String(wildcard ...rune) string {
 	ret := ""
 	for _, rowContent := range c.Content {
@@ -94,10 +94,10 @@ func (c Candidate) IncrementCandidate() (Candidate, bool) {
 	return increment, success
 }
 
-// Copy creates an exact copy of the content.
-func (content Content) Copy() Content {
+// Copy makes an exact copy of the content.
+func (c Content) Copy() Content {
 	var newContent Content
-	for _, row := range content {
+	for _, row := range c {
 		var newRow []int
 		for _, char := range row {
 			newRow = append(newRow, char)
@@ -107,11 +107,14 @@ func (content Content) Copy() Content {
 	return newContent
 }
 
-// Copy creates an exact copy of the candidate
+// Copy makes an exact copy of the candidate
 func (c Candidate) Copy() Candidate {
 	return Candidate{c.Content.Copy(), c.Alphabet.Copy()}
 }
 
+// Merge merges the characters of a linear candidate into the wildcards of the rectangular candidate.
+// The cFill is allowed to have further wildcards.
+// Fails if the cFill candidates has a different size than the number of wildcards in c.
 func (c Candidate) Merge(cFill lin.Candidate) (Candidate, bool) {
 	if c.CountWildcards() != cFill.Len() {
 		return Candidate{}, false
@@ -125,12 +128,12 @@ func (c Candidate) Merge(cFill lin.Candidate) (Candidate, bool) {
 		var rowContent lin.Content
 		for _, num := range row {
 			var newNum int
-			if num != -1 {
+			if num != collection.WildcardNumber {
 				char, _ := c.Alphabet.Char(num)
 				newNum, _ = alphabetMerge.Number(char)
 			} else {
-				if cFill.Content[currentFill] == -1 {
-					newNum = -1
+				if cFill.Content[currentFill] == collection.WildcardNumber {
+					newNum = collection.WildcardNumber
 				} else {
 					char, _ := cFill.Alphabet.Char(cFill.Content[currentFill])
 					newNum, _ = alphabetMerge.Number(char)
@@ -146,6 +149,7 @@ func (c Candidate) Merge(cFill lin.Candidate) (Candidate, bool) {
 }
 
 // GetRow restrict a candidate to the given row (which leaves a linear candidate)
+// Fails if the rowNumber is too large
 func (c Candidate) GetRow(rowNumber int) (lin.Candidate, bool) {
 	if len(c.Content) <= rowNumber {
 		return lin.MakeCandidate(""), false
@@ -154,6 +158,8 @@ func (c Candidate) GetRow(rowNumber int) (lin.Candidate, bool) {
 	return row, true
 }
 
+// UpdateRow overwrites the row of a given candidate with a given row (as linear candidate)
+// Fails if the size doesn't match or the rowNumber is too large
 func (c Candidate) UpdateRow(rowInsert lin.Candidate, rowNumber int) (Candidate, bool) {
 	if len(c.Content) <= rowNumber {
 		return c.Copy(), false
@@ -166,8 +172,8 @@ func (c Candidate) UpdateRow(rowInsert lin.Candidate, rowNumber int) (Candidate,
 	context := c.Content.Copy()
 	for colNumber := range rowInsert.Content {
 		num := rowInsert.Content[colNumber]
-		if num == -1 {
-			context[rowNumber][colNumber] = -1
+		if num == collection.WildcardNumber {
+			context[rowNumber][colNumber] = collection.WildcardNumber
 		} else {
 			char, _ := rowInsert.Alphabet.Char(num)
 			newNum, _ := alphabet.Number(char)
@@ -178,6 +184,7 @@ func (c Candidate) UpdateRow(rowInsert lin.Candidate, rowNumber int) (Candidate,
 }
 
 // GetCol restrict a candidate to the given col (which leaves a linear candidate)
+// Fails if the colNumber is too large
 func (c Candidate) GetCol(colNumber int) (lin.Candidate, bool) {
 	var content lin.Content
 	for _, row := range c.Content {
@@ -190,6 +197,8 @@ func (c Candidate) GetCol(colNumber int) (lin.Candidate, bool) {
 	return col, true
 }
 
+// UpdateCol overwrites the col of a given candidate with a given col (as linear candidate)
+// Fails if the size doesn't match or the colNumber is too large
 func (c Candidate) UpdateCol(colInsert lin.Candidate, colNumber int) (Candidate, bool) {
 	if len(c.Content) != len(colInsert.Content) {
 		return c.Copy(), false
@@ -204,8 +213,8 @@ func (c Candidate) UpdateCol(colInsert lin.Candidate, colNumber int) (Candidate,
 		}
 
 		num := colInsert.Content[rowNumber]
-		if num == -1 {
-			context[rowNumber][colNumber] = -1
+		if num == collection.WildcardNumber {
+			context[rowNumber][colNumber] = collection.WildcardNumber
 		} else {
 			char, _ := colInsert.Alphabet.Char(num)
 			newNum, _ := alphabet.Number(char)

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"crossmatcher/lin"
+	"crossmatcher/rect"
 )
 
 func main() {
-	lin.Window()
-	//rect.Window()
+	//lin.Window()
+	rect.Window()
 }

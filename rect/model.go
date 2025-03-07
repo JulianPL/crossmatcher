@@ -10,6 +10,7 @@ type Model struct {
 	candidate Candidate
 }
 
+// NewModel creates a model from the given vRules, hRules, alphabet and candidate (as strings)
 func NewModel(vRules, hRules []string, alphabetString string, candidate []string) *Model {
 	m := &Model{}
 	alphabet := collection.MakeAlphabet(alphabetString, '.')
@@ -20,11 +21,12 @@ func NewModel(vRules, hRules []string, alphabetString string, candidate []string
 	return m
 }
 
+// NewModelRandom creates a model for a random crossword with given alphabet, height and width
 func NewModelRandom(alphabetString string, height, width int) *Model {
 	m := &Model{}
 	alphabet := collection.MakeAlphabet(alphabetString, '.')
 
-	m.crossword = MakeRandomCrossword(alphabet, height, width)
+	m.crossword = MakeCrosswordRandom(alphabet, height, width)
 
 	candidate := make([]string, height)
 	for i := range height {
@@ -35,6 +37,8 @@ func NewModelRandom(alphabetString string, height, width int) *Model {
 	return m
 }
 
+// Solve returns the solution to the model as string
+// Returns Repeat("#") if there is no solution
 func (m *Model) Solve() []string {
 	candidate, count := m.crossword.SolveLinearReductions(m.candidate)
 
@@ -43,7 +47,7 @@ func (m *Model) Solve() []string {
 
 	if count == 0 {
 		ret := make([]string, height)
-		for i := 0; i < height; i++ {
+		for i := range height {
 			ret[i] = strings.Repeat("#", width)
 		}
 
@@ -51,7 +55,7 @@ func (m *Model) Solve() []string {
 	}
 
 	ret := make([]string, height)
-	for i := 0; i < height; i++ {
+	for i := range height {
 		row, _ := candidate.GetRow(i)
 		ret[i] = row.String()
 	}
@@ -59,7 +63,7 @@ func (m *Model) Solve() []string {
 	candidate, count = m.crossword.SolveBruteforce(candidate)
 
 	if count == 1 {
-		for i := 0; i < height; i++ {
+		for i := range height {
 			row, _ := candidate.GetRow(i)
 			ret[i] = row.String()
 		}

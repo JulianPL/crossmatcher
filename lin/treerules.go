@@ -145,7 +145,7 @@ func (node RegexNode) SeparateIntoBlocks() RegexNode {
 	return ret
 }
 
-// WithAlternationSubgroups replaces each child with a alternation of itself
+// WithAlternationSubgroups replaces each child with an alternation of itself
 func (node RegexNode) WithAlternationSubgroups() RegexNode {
 	ret := node.DeepCopy()
 	for i, child := range ret.Children {

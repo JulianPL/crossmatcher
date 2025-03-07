@@ -20,17 +20,9 @@ type CrosswordTree struct {
 	Alphabet   collection.Alphabet
 }
 
-func MakeRandomCrossword(alphabet collection.Alphabet, height, width int) Crossword {
-	trivial := MakeCrosswordRandomTrivial(alphabet, height, width)
-	horizontal := make([]lin.RegexNode, height)
-	vertical := make([]lin.RegexNode, width)
-	for i, rule := range trivial.Horizontal {
-		horizontal[i] = lin.MakeRegexNode(rule)
-	}
-	for i, rule := range trivial.Vertical {
-		vertical[i] = lin.MakeRegexNode(rule)
-	}
-	ret := CrosswordTree{Horizontal: horizontal, Vertical: vertical, Alphabet: alphabet}
+// MakeCrosswordRandom makes a random crossword over an underlying alphabet with given size.
+func MakeCrosswordRandom(alphabet collection.Alphabet, height, width int) Crossword {
+	ret := MakeCrosswordTreeRandomTrivial(alphabet, height, width)
 	ret = ret.initialSeparationTransformations()
 
 	for range 5 * (height + width) {
@@ -64,6 +56,21 @@ func MakeCrosswordRandomTrivial(alphabet collection.Alphabet, height, width int)
 	return MakeCrossword(alphabet, horizontal, vertical)
 }
 
+// MakeCrosswordTreeRandomTrivial makes a random trivial crossword tree over an underlying alphabet with given size.
+func MakeCrosswordTreeRandomTrivial(alphabet collection.Alphabet, height, width int) CrosswordTree {
+	trivial := MakeCrosswordRandomTrivial(alphabet, height, width)
+	horizontal := make([]lin.RegexNode, height)
+	vertical := make([]lin.RegexNode, width)
+	for i, rule := range trivial.Horizontal {
+		horizontal[i] = lin.MakeRegexNode(rule)
+	}
+	for i, rule := range trivial.Vertical {
+		vertical[i] = lin.MakeRegexNode(rule)
+	}
+	return CrosswordTree{Horizontal: horizontal, Vertical: vertical, Alphabet: alphabet}
+}
+
+// DeepCopy creates a copy of a crossword tree which can be altered without side effects to the original tree
 func (c CrosswordTree) DeepCopy() CrosswordTree {
 	ret := CrosswordTree{}
 	horizontal := make([]lin.RegexNode, len(c.Horizontal))
@@ -80,6 +87,7 @@ func (c CrosswordTree) DeepCopy() CrosswordTree {
 	return ret
 }
 
+// ToCrossword converts the crossword tree to a crossword
 func (c CrosswordTree) ToCrossword() Crossword {
 	horizontal := make([]string, len(c.Horizontal))
 	vertical := make([]string, len(c.Vertical))
@@ -92,6 +100,7 @@ func (c CrosswordTree) ToCrossword() Crossword {
 	return MakeCrossword(c.Alphabet, horizontal, vertical)
 }
 
+// getRandomRuleRef returns the reference to a random rule (as lin.RegexNode)
 func (c CrosswordTree) getRandomRuleRef() *lin.RegexNode {
 	dimSum := len(c.Horizontal) + len(c.Vertical)
 	rule := rand.Intn(dimSum)
@@ -104,6 +113,7 @@ func (c CrosswordTree) getRandomRuleRef() *lin.RegexNode {
 	}
 }
 
+// transformSingleRule applies a single random rule transformation to a single random rule
 func (c CrosswordTree) transformSingleRule(alphabet collection.Alphabet) CrosswordTree {
 	ruleRef := c.getRandomRuleRef()
 	rule := getTransformationNumber()
@@ -119,10 +129,12 @@ func (c CrosswordTree) transformSingleRule(alphabet collection.Alphabet) Crosswo
 	}
 }
 
+// getTransformationProbabilityAcc returns the accumulated probabilities of the different rule transformations
 func getTransformationProbabilityAcc() []float64 {
 	return []float64{0.8, 0.90}
 }
 
+// getTransformationNumber gets a random number representing a rule transformation
 func getTransformationNumber() int {
 	blockProbabilityAcc := getTransformationProbabilityAcc()
 	randomVal := rand.Float64()
@@ -134,28 +146,37 @@ func getTransformationNumber() int {
 	return len(blockProbabilityAcc)
 }
 
+// MergeBlocks applies MergeRandomBlocks rule to a given rule
+// Rollback if the new crossword does not have a unique solution anymore
 func (c CrosswordTree) MergeBlocks(ruleRef *lin.RegexNode) CrosswordTree {
 	rule := *ruleRef
 	rule = rule.MergeRandomBlocks()
 	return c.tryRuleChange(ruleRef, rule)
 }
 
+// ExtendAlternationElement applies ExtendRandomAlternationElement rule to a given rule
+// Rollback if the new crossword does not have a unique solution anymore
 func (c CrosswordTree) ExtendAlternationElement(ruleRef *lin.RegexNode, alphabet collection.Alphabet) CrosswordTree {
 	rule := *ruleRef
 	rule = rule.ExtendRandomAlternationElement(alphabet)
 	return c.tryRuleChange(ruleRef, rule)
 }
 
+// ShortenAlternationElement applies ShortenRandomAlternationElement rule to a given rule
+// Rollback if the new crossword does not have a unique solution anymore
 func (c CrosswordTree) ShortenAlternationElement(ruleRef *lin.RegexNode) CrosswordTree {
 	rule := *ruleRef
 	rule = rule.ShortenRandomAlternationElement()
 	return c.tryRuleChange(ruleRef, rule)
 }
 
+// tryRuleChange tests if a rule change results in a crossword with a unique solution
+// if yes: the rule gets applied
+// if no: the rule gets rolled back
 func (c CrosswordTree) tryRuleChange(ruleRef *lin.RegexNode, newRule lin.RegexNode) CrosswordTree {
 	oldRule := *ruleRef
 	*ruleRef = newRule
-	if !c.ToCrossword().hasUniqueSolution() {
+	if !c.ToCrossword().HasUniqueSolution() {
 		*ruleRef = oldRule
 	}
 	return c
@@ -173,6 +194,7 @@ func applyInitialSeparationTransformations(rules []lin.RegexNode) []lin.RegexNod
 	return newRules
 }
 
+// applyFinalSeparationTransformations applies a sequence of transformations to a slice of RegexNodes
 func applyFinalSeparationTransformations(rules []lin.RegexNode) []lin.RegexNode {
 	newRules := make([]lin.RegexNode, len(rules))
 	for i, rule := range rules {
@@ -181,6 +203,7 @@ func applyFinalSeparationTransformations(rules []lin.RegexNode) []lin.RegexNode 
 	return newRules
 }
 
+// initialSeparationTransformations applies the finalSeparationTransformations to each rule.
 func (c CrosswordTree) initialSeparationTransformations() CrosswordTree {
 	ret := c.DeepCopy()
 	ret.Horizontal = applyInitialSeparationTransformations(ret.Horizontal)
@@ -188,6 +211,7 @@ func (c CrosswordTree) initialSeparationTransformations() CrosswordTree {
 	return ret
 }
 
+// finalSeparationTransformations applies the finalSeparationTransformations to each rule.
 func (c CrosswordTree) finalSeparationTransformations() CrosswordTree {
 	ret := c.DeepCopy()
 	ret.Horizontal = applyFinalSeparationTransformations(ret.Horizontal)
